@@ -21,7 +21,7 @@ export default function Home() {
       </NavBar>
 
       <ContentWrapper>
-        <App />
+      <App />
       </ContentWrapper>
     </div>
   );

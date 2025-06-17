@@ -62,43 +62,198 @@ const JSONTest: React.FC = () => {
     time: number;
     duration: number;
     type: string;
-    text?: string;
+    name: string;
+    text: string;
+    source: string;
+    path: string;
   }>>([]);
   const [currentEditingElement, setCurrentEditingElement] = useState<number>(-1);
   const previewRef = useRef<Preview>();
   const previewContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const cursorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 解析時間軸元素
+  // 解析時間軸元素（支援composition嵌套結構）
   const parseTimelineElements = useCallback((source: any) => {
-    if (!source.elements || !Array.isArray(source.elements)) return [];
+    try {
+      if (!source.elements || !Array.isArray(source.elements)) {
+        console.log('⚠️ 無效的elements陣列:', source.elements);
+        return [];
+      }
 
-    const elements = source.elements
-      .map((element: any, index: number) => {
-        const timeStr = element.time || element.start_time || '0s';
-        const durationStr = element.duration || '3s';
+      // 解析時間字符串轉為秒數
+      const parseTime = (timeStr: any): number => {
+        if (typeof timeStr === 'number') return timeStr;
+        if (timeStr === 'end') return 0; // 特殊值，需要後續處理
+        const match = String(timeStr || '0').match(/(\d+(\.\d+)?)\s*s?/);
+        return match ? parseFloat(match[1]) : 0;
+      };
+
+      // 計算元素的估計持續時間
+      const estimateDuration = (element: any): number => {
+        if (element.duration !== undefined) {
+          return parseTime(element.duration);
+        }
         
-        // 解析時間字符串轉為秒數
-        const parseTime = (timeStr: string): number => {
-          if (typeof timeStr === 'number') return timeStr;
-          const match = String(timeStr).match(/(\d+(\.\d+)?)\s*s?/);
-          return match ? parseFloat(match[1]) : 0;
-        };
+        // 根據元素類型估算默認持續時間
+        switch (element.type) {
+          case 'video':
+          case 'audio':
+            return 8; // 視頻/音頻默認8秒
+          case 'image':
+            return 3; // 圖片默認3秒
+          case 'text':
+            return 4; // 文字默認4秒
+          case 'composition':
+            return 6; // 組合默認6秒
+          case 'shape':
+            return 5; // 形狀默認5秒
+          default:
+            return 3; // 其他默認3秒
+        }
+      };
 
-        const time = parseTime(timeStr);
-        const duration = parseTime(durationStr);
+            // 遞歸解析元素（處理composition嵌套和自動時間軸）
+      const parseElementsRecursively = (
+        elements: any[], 
+        parentTime: number = 0, 
+        parentPath: string = ''
+      ): any[] => {
+        const results: any[] = [];
 
-        return {
-          id: `element-${index}`,
-          time,
-          duration,
-          type: element.type || 'unknown',
-          text: element.text || element.source?.split('/').pop() || `${element.type} ${index + 1}`
-        };
-      })
-      .sort((a: any, b: any) => a.time - b.time); // 按時間排序
+        // 按track分組元素
+        const trackGroups: { [track: number]: any[] } = {};
+        elements.forEach((element, index) => {
+          const track = element.track || 1;
+          if (!trackGroups[track]) trackGroups[track] = [];
+          trackGroups[track].push({ ...element, originalIndex: index });
+        });
 
-    return elements;
+        // 為每個track計算自動時間軸
+        Object.keys(trackGroups).forEach(trackStr => {
+          const track = parseInt(trackStr);
+          const trackElements = trackGroups[track];
+          let currentTrackTime = 0; // 當前track的時間軸位置
+
+          console.log(`🎬 處理Track ${track}: ${trackElements.length} 個元素`);
+
+          trackElements.forEach((element: any, trackIndex: number) => {
+            const elementPath = parentPath ? `${parentPath}.${element.originalIndex}` : `${element.originalIndex}`;
+            
+            // 決定元素的開始時間
+            let elementTime: number;
+            if (element.time !== undefined) {
+              // 有明確時間，使用指定時間
+              elementTime = parseTime(element.time);
+              currentTrackTime = Math.max(currentTrackTime, elementTime);
+            } else {
+              // 沒有明確時間，使用當前track時間
+              elementTime = currentTrackTime;
+            }
+
+            // 如果是composition類型，先處理子元素以計算準確的持續時間
+            let compositionChildElements: any[] = [];
+            if (element.type === 'composition' && element.elements && Array.isArray(element.elements)) {
+              // 為了計算持續時間，先遞歸解析子元素（使用臨時時間偏移0）
+              compositionChildElements = parseElementsRecursively(
+                element.elements, 
+                0, // 臨時使用0來計算相對時間
+                elementPath
+              );
+            }
+
+            // 計算持續時間，對於composition使用子元素的實際時間軸
+            let elementDuration: number;
+            if (element.type === 'composition' && compositionChildElements.length > 0 && !element.duration) {
+              // 基於解析後的子元素計算composition的實際持續時間
+              const maxChildEndTime = Math.max(...compositionChildElements.map(child => 
+                child.time + child.duration
+              ));
+              elementDuration = maxChildEndTime > 0 ? maxChildEndTime : estimateDuration(element);
+              console.log(`📏 Composition ${element.name} 實際持續時間: ${elementDuration.toFixed(1)}s (基於子元素計算)`);
+            } else {
+              elementDuration = estimateDuration(element);
+            }
+
+            // 處理transition重疊效果
+            if (element.transition && trackIndex > 0) {
+              const transitionDuration = parseTime(element.transition.duration || '1');
+              // transition會讓當前元素提前開始，與前一個元素重疊
+              elementTime = Math.max(0, elementTime - transitionDuration);
+              console.log(`🔄 處理transition: ${element.name || element.type}, 提前 ${transitionDuration}s 開始`);
+            }
+
+            const absoluteTime = parentTime + elementTime;
+
+            // 創建當前元素的基本信息
+            const baseElement = {
+              id: element.id || `element-${elementPath}`,
+              time: absoluteTime,
+              duration: elementDuration,
+              type: element.type || 'unknown',
+              name: element.name || `${element.type} ${element.originalIndex + 1}`,
+              text: element.text || (element.source ? element.source.split('/').pop()?.replace(/\?.*$/, '') : '') || '',
+              source: element.source || '',
+              path: elementPath,
+              track: track
+            };
+
+            results.push(baseElement);
+
+            // 更新track時間軸位置（考慮實際結束時間）
+            const elementEndTime = elementTime + elementDuration;
+            currentTrackTime = Math.max(currentTrackTime, elementEndTime);
+            
+            console.log(`⏰ 元素時間計算: ${baseElement.name} - 開始:${elementTime.toFixed(1)}s, 持續:${elementDuration.toFixed(1)}s, 絕對時間:${absoluteTime.toFixed(1)}s`);
+
+            // 添加composition的子元素（使用正確的時間偏移）
+            if (compositionChildElements.length > 0) {
+              console.log(`📁 添加composition子元素: ${element.name || `composition-${element.originalIndex}`}, 時間偏移: ${absoluteTime}s`);
+              const adjustedChildElements = compositionChildElements.map(child => ({
+                ...child,
+                time: child.time + absoluteTime // 調整為正確的絕對時間
+              }));
+              results.push(...adjustedChildElements);
+            }
+          });
+        });
+
+        return results;
+      };
+
+      // 開始遞歸解析
+      const allElements = parseElementsRecursively(source.elements);
+      
+      // 按時間排序並過濾重複
+      const sortedElements = allElements
+        .sort((a: any, b: any) => {
+          // 首先按時間排序
+          if (a.time !== b.time) return a.time - b.time;
+          // 時間相同時，按路徑深度排序（父元素在前）
+          return a.path.split('.').length - b.path.split('.').length;
+        });
+
+             console.log(`✅ 解析完成 ${sortedElements.length} 個時間軸元素 (包含嵌套)`);
+       
+       // 打印時間軸總覽
+       console.log('📊 時間軸總覽:');
+       sortedElements.slice(0, 10).forEach((el, i) => {
+         const endTime = el.time + el.duration;
+         console.log(`  ${i}: ${el.time.toFixed(1)}s-${endTime.toFixed(1)}s | ${el.type.toUpperCase()} | ${el.name}`);
+       });
+       
+       if (sortedElements.length > 10) {
+         console.log(`  ... 還有 ${sortedElements.length - 10} 個元素`);
+       }
+       
+       const totalDuration = Math.max(...sortedElements.map(el => el.time + el.duration));
+       console.log(`🎬 總視頻時長: ${totalDuration.toFixed(1)}秒`);
+      
+      return sortedElements;
+    } catch (err) {
+      console.error('解析時間軸元素失敗:', err);
+      return [];
+    }
   }, []);
 
   // 設置預覽
@@ -230,52 +385,79 @@ const JSONTest: React.FC = () => {
     if (previewReady && previewRef.current) {
       const timeoutId = setTimeout(async () => {
         try {
+          setError(null); // 清除之前的錯誤
           const source = JSON.parse(jsonInput);
-          await previewRef.current!.setSource(source);
           
-          // 解析並設置時間軸元素
+          // 先解析時間軸元素，避免狀態不同步
           const elements = parseTimelineElements(source);
           setTimelineElements(elements);
+          
+          // 然後更新預覽源
+          await previewRef.current!.setSource(source);
+          
+          console.log('JSON更新成功，時間軸元素:', elements.length);
         } catch (err) {
           console.error('JSON更新失敗:', err);
-          setError(`JSON更新失敗: ${err instanceof Error ? err.message : '未知錯誤'}`);
+          // 只有在真正的語法錯誤時才顯示錯誤，避免防抖期間的誤報
+          if (err instanceof SyntaxError) {
+            setError(`JSON語法錯誤: ${err.message}`);
+          }
         }
-      }, 500); // 防抖
+      }, 800); // 增加防抖時間以處理長JSON
       return () => clearTimeout(timeoutId);
     }
   }, [jsonInput, parseTimelineElements]); // 只依賴jsonInput變化
 
   // 跳轉到特定時間
-  const seekToTime = useCallback(async (time: number) => {
+  const seekToTime = useCallback(async (time: number, elementIndex?: number) => {
     if (!previewRef.current || !previewReady) return;
     
     try {
       await previewRef.current.setTime(time);
       console.log(`跳轉到時間: ${time}秒`);
+      
+      // 如果提供了元素索引，同步更新高亮狀態
+      if (elementIndex !== undefined && elementIndex !== currentEditingElement) {
+        setCurrentEditingElement(elementIndex);
+        console.log(`🎯 同步更新高亮元素索引: ${elementIndex}`);
+      }
     } catch (err) {
       console.error('跳轉時間失敗:', err);
     }
-  }, [previewReady]);
+  }, [previewReady, currentEditingElement]);
 
-  // 檢測當前編輯的元素
-  const detectCurrentElement = useCallback((cursorPosition: number, jsonText: string) => {
+  // 檢測當前編輯的元素（按時間軸順序修正版本）
+  const detectCurrentElement = useCallback((cursorPosition: number, jsonText: string, timelineElements: Array<any>) => {
     try {
       const source = JSON.parse(jsonText);
       if (!source.elements || !Array.isArray(source.elements)) return -1;
+      if (!timelineElements || timelineElements.length === 0) return -1;
 
-      // 找到每個元素在JSON字符串中的位置範圍
-      const elementsText = jsonText.substring(
-        jsonText.indexOf(`"elements"`),
-        jsonText.lastIndexOf(']') + 1
-      );
+      // 找到elements陣列在JSON中的起始位置
+      const elementsStart = jsonText.indexOf('"elements"');
+      if (elementsStart === -1) return -1;
       
-      let elementStartIndex = jsonText.indexOf(`"elements"`) + jsonText.substring(jsonText.indexOf(`"elements"`)).indexOf('[') + 1;
-      let braceCount = 0;
-      let currentElementIndex = 0;
+      const arrayStart = jsonText.indexOf('[', elementsStart);
+      if (arrayStart === -1) return -1;
+
+      // 如果光標在elements陣列之前，返回-1
+      if (cursorPosition < arrayStart) return -1;
+
+      // 解析每個元素的邊界並獲取JSON中的原始索引
+      let currentPos = arrayStart + 1;
+      let braceDepth = 0;
       let inString = false;
       let escapeNext = false;
+      let jsonElementIndex = 0;
+      let elementStartPos = currentPos;
 
-      for (let i = elementStartIndex; i < jsonText.length && i < cursorPosition; i++) {
+      // 跳過空白字符找到第一個元素
+      while (currentPos < jsonText.length && /\s/.test(jsonText[currentPos])) {
+        currentPos++;
+      }
+      elementStartPos = currentPos;
+
+      for (let i = currentPos; i < jsonText.length; i++) {
         const char = jsonText[i];
         
         if (escapeNext) {
@@ -295,24 +477,143 @@ const JSONTest: React.FC = () => {
         
         if (!inString) {
           if (char === '{') {
-            braceCount++;
+            braceDepth++;
           } else if (char === '}') {
-            braceCount--;
-            if (braceCount === 0) {
-              // 完成一個元素
-              currentElementIndex++;
+            braceDepth--;
+            
+            // 當前元素結束
+            if (braceDepth === 0) {
+              // 檢查光標是否在當前元素範圍內
+              if (cursorPosition >= elementStartPos && cursorPosition <= i) {
+                // 找到光標所在的JSON元素，現在需要找到它在時間軸中的對應索引
+                const jsonElement = source.elements[jsonElementIndex];
+                if (jsonElement) {
+                  // 解析時間字符串轉為秒數（與parseTimelineElements相同邏輯）
+                  const parseTime = (timeStr: string): number => {
+                    if (typeof timeStr === 'number') return timeStr;
+                    const match = String(timeStr).match(/(\d+(\.\d+)?)\s*s?/);
+                    return match ? parseFloat(match[1]) : 0;
+                  };
+
+                  const elementTime = parseTime(jsonElement.time || jsonElement.start_time || '0');
+                  const elementType = jsonElement.type || 'unknown';
+                  const elementName = jsonElement.name || `${elementType} ${jsonElementIndex + 1}`;
+                  const elementSource = jsonElement.source || '';
+
+                                      console.log(`🔍 JSON元素匹配: 索引=${jsonElementIndex}, 類型=${elementType}, 名稱="${elementName}", 時間=${elementTime}s, source=${elementSource}`);
+
+                  // 開始詳細匹配流程
+                  console.log(`🔍 開始詳細匹配流程:`);
+                  console.log(`   JSON元素: 索引=${jsonElementIndex}, 類型=${elementType}, 時間=${elementTime}s`);
+                  console.log(`   元素詳情: name="${elementName}", source="${elementSource}"`);
+                  console.log(`   可用時間軸元素: ${timelineElements.length}個`);
+
+                  // 在時間軸元素中找到匹配的索引
+                  const timelineIndex = timelineElements.findIndex((timelineElement, index) => {
+                    const typeMatch = timelineElement.type === elementType;
+                    
+                    // 策略1: 對於有source的元素，優先使用source匹配
+                    if (elementSource && timelineElement.source) {
+                      const sourceMatch = timelineElement.source === elementSource;
+                      console.log(`  策略1-source匹配: ${sourceMatch} (${elementSource} vs ${timelineElement.source})`);
+                      if (typeMatch && sourceMatch) {
+                        return true;
+                      }
+                    }
+                    
+                                        // 策略2: 對於有明確時間和名稱的元素，使用時間+名稱匹配
+                    const elementTimeMatch = Math.abs(timelineElement.time - elementTime) < 0.01;
+                    if (elementTimeMatch && typeMatch && (elementTime > 0 || jsonElement.time !== undefined)) {
+                      const nameMatch = timelineElement.name === elementName;
+                      console.log(`  策略2-時間+名稱匹配: ${nameMatch} (時間:${elementTimeMatch}, 名稱:"${timelineElement.name}" vs "${elementName}")`);
+                      if (nameMatch) {
+                        return true;
+                      }
+                    }
+                    
+                    // 策略3: 對於簡單序列（沒有明確time的元素），使用JSON順序匹配
+                    if (elementTime === 0 && !jsonElement.time) {
+                      // 找到相同類型的第 jsonElementIndex 個元素
+                      const sameTypeElements = timelineElements.filter(el => el.type === elementType);
+                      const isCorrectIndex = sameTypeElements[jsonElementIndex] === timelineElement;
+                      console.log(`  策略3-順序匹配: ${isCorrectIndex} (第${jsonElementIndex}個${elementType}元素，共${sameTypeElements.length}個)`);
+                      if (isCorrectIndex) {
+                        return true;
+                      }
+                    }
+                    
+                    // 策略4: 原始索引匹配（處理 originalIndex 差異）
+                    if (typeMatch && timelineElement.path) {
+                      const pathParts = timelineElement.path.split('.');
+                      const elementOriginalIndex = parseInt(pathParts[pathParts.length - 1]);
+                      const indexMatch = elementOriginalIndex === jsonElementIndex;
+                      console.log(`  策略4-原始索引匹配: ${indexMatch} (path:${timelineElement.path}, 原始索引:${elementOriginalIndex} vs JSON索引:${jsonElementIndex})`);
+                      if (indexMatch) {
+                        return true;
+                      }
+                    }
+                    
+                    return false;
+                  });
+
+                  if (timelineIndex !== -1) {
+                    console.log(`✅ 匹配成功: JSON索引=${jsonElementIndex} → 時間軸索引=${timelineIndex}, 元素="${timelineElements[timelineIndex].name}"`);
+                    return timelineIndex;
+                  } else {
+                    console.log(`❌ 精確匹配失敗: JSON索引=${jsonElementIndex}, 嘗試降級策略`);
+                    console.log(`   JSON元素詳情: type=${elementType}, time=${elementTime}, name="${elementName}", hasSource=${!!elementSource}`);
+                    
+                    // 降級匹配：僅針對非常特殊的簡單情況
+                    const isVerySimpleCase = (
+                      elementTime === 0 && 
+                      !jsonElement.time && 
+                      !jsonElement.name && 
+                      elementSource && 
+                      elementType === 'video'
+                    );
+                    
+                    if (isVerySimpleCase && jsonElementIndex < timelineElements.length) {
+                      const fallbackElement = timelineElements[jsonElementIndex];
+                      if (fallbackElement.type === elementType) {
+                        console.log(`🔄 簡單視頻序列降級匹配: 索引${jsonElementIndex} → "${fallbackElement.name}"`);
+                        return jsonElementIndex;
+                      }
+                    }
+                    
+                    console.log(`❌ 所有匹配策略失敗`);
+                    return -1;
+                  }
+                }
+                return -1;
+              }
+              
+              // 準備檢測下一個元素
+              jsonElementIndex++;
+              
+              // 跳過逗號和空白，找到下一個元素開始位置
+              let nextPos = i + 1;
+              while (nextPos < jsonText.length && /[\s,]/.test(jsonText[nextPos])) {
+                nextPos++;
+              }
+              
+              if (nextPos < jsonText.length && jsonText[nextPos] === ']') {
+                // 到達陣列結尾
+                break;
+              }
+              
+              elementStartPos = nextPos;
             }
+          } else if (char === ']' && braceDepth === 0) {
+            // 到達elements陣列結尾
+            break;
           }
         }
       }
 
-      // 確保索引有效
-      if (currentElementIndex >= 0 && currentElementIndex < source.elements.length) {
-        return currentElementIndex;
-      }
-      
       return -1;
+      
     } catch (err) {
+      console.error('檢測當前元素失敗:', err);
       return -1;
     }
   }, []);
@@ -321,25 +622,64 @@ const JSONTest: React.FC = () => {
   const handleCursorChange = useCallback(() => {
     if (!textareaRef.current || !previewReady) return;
     
+    // 清理之前的超時
+    if (cursorTimeoutRef.current) {
+      clearTimeout(cursorTimeoutRef.current);
+    }
+    
     // 防抖處理
-    setTimeout(() => {
+    cursorTimeoutRef.current = setTimeout(() => {
       if (!textareaRef.current) return;
       
       const cursorPosition = textareaRef.current.selectionStart;
-      const elementIndex = detectCurrentElement(cursorPosition, jsonInput);
+                        const elementIndex = detectCurrentElement(cursorPosition, jsonInput, timelineElements);
+      
+      console.log(`光標位置: ${cursorPosition}, 檢測元素索引: ${elementIndex}, 當前編輯元素: ${currentEditingElement}`);
+      console.log(`時間軸元素總數: ${timelineElements?.length || 0}`);
+      
+      // 特殊調試：列出前3個時間軸元素
+      if (timelineElements && timelineElements.length > 0) {
+        console.log(`前3個時間軸元素:`, timelineElements.slice(0, 3).map((el, i) => 
+          `${i}: ${el.name} (${el.type}, ${el.time}s, source: ${el.source})`
+        ));
+      }
       
       if (elementIndex !== -1 && elementIndex !== currentEditingElement) {
         setCurrentEditingElement(elementIndex);
         
         // 自動跳轉到該元素的時間
-        if (timelineElements[elementIndex]) {
+        if (timelineElements && timelineElements[elementIndex]) {
           const element = timelineElements[elementIndex];
-          console.log(`🎯 自動跳轉到元素 ${elementIndex}: ${element.text} (${element.time}s)`);
-          seekToTime(element.time);
+          console.log(`🎯 準備跳轉: 索引=${elementIndex}, 元素="${element.name}", 時間=${element.time}s`);
+          console.log(`🎯 目標時間詳情: 類型=${element.type}, 源=${element.source}`);
+          
+          // 添加額外的驗證，確保時間有效
+          if (element.time >= 0) {
+            console.log(`▶️ 執行跳轉到 ${element.time}s`);
+            seekToTime(element.time, elementIndex);
+          } else {
+            console.log(`⚠️ 元素時間無效: ${element.time}, 跳過跳轉`);
+          }
+        } else {
+          console.log(`⚠️ 時間軸元素不存在: 索引 ${elementIndex}, 總數: ${timelineElements?.length || 0}`);
+          if (timelineElements && timelineElements.length > 0) {
+            console.log(`可用元素:`, timelineElements.map((el, i) => `${i}: ${el.name} (${el.time}s)`));
+          }
         }
       }
-    }, 300); // 300ms 防抖
-  }, [jsonInput, currentEditingElement, timelineElements, detectCurrentElement, seekToTime, previewReady]);
+      
+      cursorTimeoutRef.current = null;
+    }, 200); // 減少防抖時間提高響應性
+  }, [jsonInput, currentEditingElement, timelineElements, seekToTime, previewReady]);
+
+  // 清理函數
+  React.useEffect(() => {
+    return () => {
+      if (cursorTimeoutRef.current) {
+        clearTimeout(cursorTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // 載入示例 JSON
   const loadExample = (exampleJson: string) => {
@@ -529,13 +869,14 @@ const JSONTest: React.FC = () => {
                     <TimelineElement
                       key={element.id}
                       $isActive={index === currentEditingElement}
-                      onClick={() => seekToTime(element.time)}
+                      onClick={() => seekToTime(element.time, index)}
                     >
                       <ElementTime>{element.time}s</ElementTime>
                       <ElementInfo>
-                        <ElementType>{element.type}</ElementType>
+                        <ElementType>{element.name}</ElementType>
                         <ElementText>{element.text}</ElementText>
                       </ElementInfo>
+                      <TypeBadge $type={element.type}>{element.type}</TypeBadge>
                       {index === currentEditingElement && <ActiveIndicator>●</ActiveIndicator>}
                     </TimelineElement>
                   ))}
@@ -757,19 +1098,22 @@ const ElementInfo = styled.div`
 `;
 
 const ElementType = styled.div`
-  font-size: 12px;
-  color: #666;
-  text-transform: uppercase;
-  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const ElementText = styled.div`
-  font-size: 14px;
-  color: #333;
+  font-size: 12px;
+  color: #666;
   margin-top: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-style: italic;
 `;
 
 const CurrentTimeInfo = styled.div`
@@ -801,4 +1145,28 @@ const AutoJumpHint = styled.span`
   color: #666;
   font-weight: normal;
   margin-left: 10px;
+`;
+
+const TypeBadge = styled.div<{ $type: string }>`
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: ${props => {
+    switch (props.$type) {
+      case 'video': return '#ff6b6b';
+      case 'audio': return '#4ecdc4';
+      case 'text': return '#45b7d1';
+      case 'image': return '#f9ca24';
+      case 'composition': return '#6c5ce7';
+      case 'shape': return '#a29bfe';
+      default: return '#74b9ff';
+    }
+  }};
+  color: white;
+  margin-left: auto;
+  margin-right: 35px; /* 為 ActiveIndicator 留出空間 */
+  align-self: center;
 `; 

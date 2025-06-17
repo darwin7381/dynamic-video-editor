@@ -1,7 +1,8 @@
-import React, { Fragment, useMemo, useRef } from 'react';
+import React, { Fragment, useMemo, useRef, useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
 import { deepClone } from '../utility/deepClone';
+import { debounce } from '../utility/debounce';
 import { TextInput } from './TextInput';
 import { SelectInput } from './SelectInput';
 import { ImageOption } from './ImageOption';
@@ -17,32 +18,81 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = (props) => {
   // In this variable, we store the modifications that are applied to the template
   // Refer to: https://creatomate.com/docs/api/rest-api/the-modifications-object
   const modificationsRef = useRef<Record<string, any>>({});
+  
+  // 添加狀態管理來處理更新過程
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Get the slide elements in the template by name (starting with 'Slide-')
   const slideElements = useMemo(() => {
     return props.currentState?.elements.filter((element) => element.source.name?.startsWith('Slide-'));
   }, [props.currentState]);
 
+  // 清除錯誤訊息的函數
+  const clearError = () => {
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+    setUpdateError(null);
+  };
+
+  // 設置錯誤訊息並自動清除
+  const setTemporaryError = (message: string) => {
+    setUpdateError(message);
+    updateTimeoutRef.current = setTimeout(() => {
+      setUpdateError(null);
+    }, 3000);
+  };
+
+  // 創建防抖動版本的屬性更新函數
+  const debouncedSetPropertyValue = useCallback(
+    debounce(async (
+      preview: Preview,
+      selector: string,
+      value: string,
+      modifications: Record<string, any>,
+      setIsUpdating: React.Dispatch<React.SetStateAction<boolean>>,
+      setTemporaryError: (message: string) => void
+    ) => {
+      await setPropertyValue(preview, selector, value, modifications, setIsUpdating, setTemporaryError);
+    }, 300), // 300ms 延遲，適合處理長JSON
+    [modificationsRef.current]
+  );
+
   return (
     <div>
       <CreateButton preview={props.preview} />
+
+      {/* 顯示更新狀態和錯誤訊息 */}
+      {isUpdating && (
+        <StatusIndicator $type="updating">
+          正在更新中...
+        </StatusIndicator>
+      )}
+      {updateError && (
+        <StatusIndicator $type="error" onClick={clearError}>
+          {updateError}
+          <CloseButton>×</CloseButton>
+        </StatusIndicator>
+      )}
 
       <Group>
         <GroupTitle>Intro</GroupTitle>
         <TextInput
           placeholder="Lorem ipsum dolor sit amet"
           onFocus={() => ensureElementVisibility(props.preview, 'Title', 1.5)}
-          onChange={(e) => setPropertyValue(props.preview, 'Title', e.target.value, modificationsRef.current)}
+          onChange={(e) => debouncedSetPropertyValue(props.preview, 'Title', e.target.value, modificationsRef.current, setIsUpdating, setTemporaryError)}
         />
         <TextInput
           placeholder="Enter your tagline here"
           onFocus={() => ensureElementVisibility(props.preview, 'Tagline', 1.5)}
-          onChange={(e) => setPropertyValue(props.preview, 'Tagline', e.target.value, modificationsRef.current)}
+          onChange={(e) => debouncedSetPropertyValue(props.preview, 'Tagline', e.target.value, modificationsRef.current, setIsUpdating, setTemporaryError)}
         />
         <TextInput
           placeholder="A second and longer text here ✌️"
           onFocus={() => ensureElementVisibility(props.preview, 'Start-Text', 1.5)}
-          onChange={(e) => setPropertyValue(props.preview, 'Start-Text', e.target.value, modificationsRef.current)}
+          onChange={(e) => debouncedSetPropertyValue(props.preview, 'Start-Text', e.target.value, modificationsRef.current, setIsUpdating, setTemporaryError)}
         />
       </Group>
 
@@ -51,7 +101,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = (props) => {
         <TextInput
           placeholder="Your Call To Action Here"
           onFocus={() => ensureElementVisibility(props.preview, 'Final-Text', 1.5)}
-          onChange={(e) => setPropertyValue(props.preview, 'Final-Text', e.target.value, modificationsRef.current)}
+          onChange={(e) => debouncedSetPropertyValue(props.preview, 'Final-Text', e.target.value, modificationsRef.current, setIsUpdating, setTemporaryError)}
         />
       </Group>
 
@@ -71,13 +121,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = (props) => {
                   placeholder={textElement.source.text}
                   onFocus={() => ensureElementVisibility(props.preview, textElement.source.name, 1.5)}
                   onChange={(e) =>
-                    setPropertyValue(props.preview, textElement.source.name, e.target.value, modificationsRef.current)
+                    debouncedSetPropertyValue(props.preview, textElement.source.name, e.target.value, modificationsRef.current, setIsUpdating, setTemporaryError)
                   }
                 />
                 <SelectInput
                   onFocus={() => ensureElementVisibility(props.preview, textElement.source.name, 1.5)}
                   onChange={(e) =>
-                    setTextStyle(props.preview, textElement.source.name, e.target.value, modificationsRef.current)
+                    setTextStyle(props.preview, textElement.source.name, e.target.value, modificationsRef.current, setIsUpdating, setTemporaryError)
                   }
                 >
                   <option value="block-text">Block Text</option>
@@ -86,7 +136,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = (props) => {
                 <SelectInput
                   value={transitionAnimation?.type}
                   onFocus={() => ensureElementVisibility(props.preview, slideElement.source.name, 0.5)}
-                  onChange={(e) => setSlideTransition(props.preview, slideElement.source.name, e.target.value)}
+                  onChange={(e) => setSlideTransition(props.preview, slideElement.source.name, e.target.value, setIsUpdating, setTemporaryError)}
                 >
                   <option value="fade">Fade Transition</option>
                   <option value="circular-wipe">Circle Wipe Transition</option>
@@ -102,13 +152,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = (props) => {
                         key={url}
                         url={url}
                         onClick={async () => {
-                          await ensureElementVisibility(props.preview, imageElement.source.name, 1.5);
-                          await setPropertyValue(
-                            props.preview,
-                            imageElement.source.name,
-                            url,
-                            modificationsRef.current,
-                          );
+                          try {
+                            setIsUpdating(true);
+                            await ensureElementVisibility(props.preview, imageElement.source.name, 1.5);
+                            await setPropertyValue(
+                              props.preview,
+                              imageElement.source.name,
+                              url,
+                              modificationsRef.current,
+                              setIsUpdating,
+                              setTemporaryError
+                            );
+                          } catch (error) {
+                            setTemporaryError('圖片更新失敗，請重試');
+                            console.error('圖片更新錯誤:', error);
+                          }
                         }}
                       />
                     ))}
@@ -120,8 +178,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = (props) => {
         );
       })}
 
-      <Button onClick={() => addSlide(props.preview)} style={{ width: '100%' }}>
-        Add Slide
+      <Button 
+        onClick={() => addSlide(props.preview, setIsUpdating, setTemporaryError)} 
+        style={{ width: '100%' }}
+        disabled={isUpdating}
+      >
+        {isUpdating ? '正在添加...' : 'Add Slide'}
       </Button>
     </div>
   );
@@ -144,12 +206,50 @@ const ImageOptions = styled.div`
   margin: 20px -10px 0 -10px;
 `;
 
+const StatusIndicator = styled.div<{ $type: 'updating' | 'error' }>`
+  position: relative;
+  margin: 10px 0;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: ${props => props.$type === 'error' ? 'pointer' : 'default'};
+  
+  ${props => props.$type === 'updating' && `
+    background: #e3f2fd;
+    color: #1976d2;
+    border-left: 4px solid #1976d2;
+  `}
+  
+  ${props => props.$type === 'error' && `
+    background: #ffebee;
+    color: #d32f2f;
+    border-left: 4px solid #d32f2f;
+  `}
+`;
+
+const CloseButton = styled.span`
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  font-weight: bold;
+  opacity: 0.7;
+  
+  &:hover {
+    opacity: 1;
+  }
+`;
+
 // Updates the provided modifications object
 const setPropertyValue = async (
   preview: Preview,
   selector: string,
   value: string,
   modifications: Record<string, any>,
+  setIsUpdating: React.Dispatch<React.SetStateAction<boolean>>,
+  setTemporaryError: (message: string) => void,
 ) => {
   if (value.trim()) {
     // If a non-empty value is passed, update the modifications based on the provided selector
@@ -160,19 +260,43 @@ const setPropertyValue = async (
   }
 
   // Set the template modifications
-  await preview.setModifications(modifications);
+  try {
+    setIsUpdating(true);
+    await preview.setModifications(modifications);
+    
+    // 確保狀態同步 - 等待一小段時間讓Preview更新完成
+    await new Promise(resolve => setTimeout(resolve, 100));
+  } catch (error) {
+    setTemporaryError('JSON 更新失敗，請重試');
+    console.error('更新錯誤:', error);
+    throw error;
+  } finally {
+    setIsUpdating(false);
+  }
 };
 
 // Sets the text styling properties
 // For a full list of text properties, refer to: https://creatomate.com/docs/json/elements/text-element
-const setTextStyle = async (preview: Preview, selector: string, style: string, modifications: Record<string, any>) => {
-  if (style === 'block-text') {
-    modifications[`${selector}.background_border_radius`] = '0%';
-  } else if (style === 'rounded-text') {
-    modifications[`${selector}.background_border_radius`] = '50%';
-  }
+const setTextStyle = async (preview: Preview, selector: string, style: string, modifications: Record<string, any>, setIsUpdating: React.Dispatch<React.SetStateAction<boolean>>, setTemporaryError: (message: string) => void) => {
+  try {
+    setIsUpdating(true);
+    
+    if (style === 'block-text') {
+      modifications[`${selector}.background_border_radius`] = '0%';
+    } else if (style === 'rounded-text') {
+      modifications[`${selector}.background_border_radius`] = '50%';
+    }
 
-  await preview.setModifications(modifications);
+    await preview.setModifications(modifications);
+    
+    // 確保狀態同步
+    await new Promise(resolve => setTimeout(resolve, 100));
+  } catch (error) {
+    setTemporaryError('樣式更新失敗，請重試');
+    console.error('樣式更新錯誤:', error);
+  } finally {
+    setIsUpdating(false);
+  }
 };
 
 // Jumps to a time position where the provided element is visible
@@ -186,7 +310,7 @@ const ensureElementVisibility = async (preview: Preview, elementName: string, ad
 };
 
 // Sets the animation of a slide element
-const setSlideTransition = async (preview: Preview, slideName: string, type: string) => {
+const setSlideTransition = async (preview: Preview, slideName: string, type: string, setIsUpdating: React.Dispatch<React.SetStateAction<boolean>>, setTemporaryError: (message: string) => void) => {
   // Make sure to clone the state as it's immutable
   const mutatedState = deepClone(preview.state);
 
@@ -205,11 +329,22 @@ const setSlideTransition = async (preview: Preview, slideName: string, type: str
 
     // Update the video source
     // Refer to: https://creatomate.com/docs/json/introduction
-    await preview.setSource(preview.getSource(mutatedState));
+    try {
+      setIsUpdating(true);
+      await preview.setSource(preview.getSource(mutatedState));
+      
+      // 確保狀態同步
+      await new Promise(resolve => setTimeout(resolve, 200));
+    } catch (error) {
+      setTemporaryError('動畫更新失敗，請重試');
+      console.error('動畫更新錯誤:', error);
+    } finally {
+      setIsUpdating(false);
+    }
   }
 };
 
-const addSlide = async (preview: Preview) => {
+const addSlide = async (preview: Preview, setIsUpdating: React.Dispatch<React.SetStateAction<boolean>>, setTemporaryError: (message: string) => void) => {
   // Get the video source
   // Refer to: https://creatomate.com/docs/json/introduction
   const source = preview.getSource();
@@ -232,15 +367,26 @@ const addSlide = async (preview: Preview) => {
     source.elements.splice(lastSlideIndex + 1, 0, newSlideSource);
 
     // Update the video source
-    await preview.setSource(source);
+    try {
+      setIsUpdating(true);
+      await preview.setSource(source);
 
-    // Jump to the time at which the text element is visible
-    await ensureElementVisibility(preview, `${slideName}-Text`, 1.5);
+      // 確保狀態同步 - 對於複雜操作需要更長時間
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Scroll to the bottom of the settings panel
-    const panel = document.querySelector('#panel');
-    if (panel) {
-      panel.scrollTop = panel.scrollHeight;
+      // Jump to the time at which the text element is visible
+      await ensureElementVisibility(preview, `${slideName}-Text`, 1.5);
+
+      // Scroll to the bottom of the settings panel
+      const panel = document.querySelector('#panel');
+      if (panel) {
+        panel.scrollTop = panel.scrollHeight;
+      }
+    } catch (error) {
+      setTemporaryError('添加Slide失敗，請重試');
+      console.error('添加錯誤:', error);
+    } finally {
+      setIsUpdating(false);
     }
   }
 };
