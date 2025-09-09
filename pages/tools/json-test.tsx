@@ -56,6 +56,7 @@ const JSONTest: React.FC = () => {
   const [previewReady, setPreviewReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
   const [currentState, setCurrentState] = useState<PreviewState>();
   const [timelineElements, setTimelineElements] = useState<Array<{
     id: string;
@@ -719,23 +720,109 @@ const JSONTest: React.FC = () => {
     }
   };
 
+  // 複製 API 請求格式
+  const copyApiRequest = async () => {
+    try {
+      // 解析當前的 JSON 輸入
+      const currentSource = JSON.parse(jsonInput);
+      
+      // 轉換屬性名稱：將 snake_case 轉換為 camelCase
+      const convertToCamelCase = (obj: any): any => {
+        if (Array.isArray(obj)) {
+          return obj.map(convertToCamelCase);
+        } else if (obj !== null && typeof obj === 'object') {
+          const converted: any = {};
+          for (const [key, value] of Object.entries(obj)) {
+            // 轉換 snake_case 到 camelCase
+            const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+            converted[camelKey] = convertToCamelCase(value);
+          }
+          return converted;
+        }
+        return obj;
+      };
+
+      // 轉換源對象
+      const convertedSource = convertToCamelCase(currentSource);
+      
+      // 包裝成 API 請求格式
+      const apiRequest = {
+        source: convertedSource,
+        output_format: "mp4"
+      };
+
+      // 轉換為 JSON 字符串
+      const apiRequestJson = JSON.stringify(apiRequest, null, 2);
+      
+      // 複製到剪貼板
+      await navigator.clipboard.writeText(apiRequestJson);
+      
+      // 顯示成功訊息
+      console.log('API 請求已複製到剪貼板');
+      setCopySuccess(true);
+      
+      // 清除成功提示
+      setTimeout(() => {
+        setCopySuccess(false);
+      }, 2000);
+      
+    } catch (err) {
+      console.error('複製 API 請求失敗:', err);
+      if (err instanceof SyntaxError) {
+        setError('JSON 格式錯誤，無法生成 API 請求');
+      } else {
+        setError('複製失敗，請重試');
+      }
+    }
+  };
+
   const examples = [
     {
       name: '載入示例',
       json: `{
   "output_format": "mp4",
-  "duration": "3 s",
-  "width": 1920,
-  "height": 1080,
+  "width": 1280,
+  "height": 720,
+  "duration": "6s",
   "elements": [
     {
       "type": "text",
-      "track": 1,
-      "time": "0 s",
-      "duration": "1 s",
+      "text": "第一段文字",
+      "font_family": "Arial",
+      "font_size": "48px",
       "fill_color": "#ffffff",
-      "text": "This text is only visible for one second",
-      "font_family": "Open Sans"
+      "x": "50%",
+      "y": "40%",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "time": "0s",
+      "duration": "2s"
+    },
+    {
+      "type": "text",
+      "text": "第二段文字",
+      "font_family": "Arial",
+      "font_size": "48px",
+      "fill_color": "#ffff00",
+      "x": "50%",
+      "y": "60%",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "time": "2s",
+      "duration": "2s"
+    },
+    {
+      "type": "text",
+      "text": "第三段文字",
+      "font_family": "Arial",
+      "font_size": "48px",
+      "fill_color": "#ff6600",
+      "x": "50%",
+      "y": "50%",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "time": "4s",
+      "duration": "2s"
     }
   ]
 }`
@@ -744,25 +831,49 @@ const JSONTest: React.FC = () => {
       name: '從文件載入',
       json: `{
   "output_format": "mp4",
-  "width": 1280,
-  "height": 720,
+  "width": 1920,
+  "height": 1080,
+  "duration": "8s",
   "elements": [
     {
       "type": "image",
       "track": 1,
-      "duration": "3 s",
-      "source": "https://creatomate-static.s3.amazonaws.com/demo/image1.jpg"
+      "source": "https://creatomate-static.s3.amazonaws.com/demo/image1.jpg",
+      "fit": "cover",
+      "duration": "8s"
     },
     {
       "type": "text",
-      "text": "Hello World",
+      "text": "圖片標題",
       "font_family": "Arial",
-      "font_size": "5 vh",
+      "font_size": "6 vh",
+      "font_weight": "700",
       "fill_color": "#ffffff",
+      "background_color": "rgba(0,0,0,0.7)",
+      "background_x_padding": "20%",
+      "background_y_padding": "10%",
       "x": "50%",
-      "y": "50%",
+      "y": "20%",
       "x_alignment": "50%",
-      "y_alignment": "50%"
+      "y_alignment": "50%",
+      "time": "1s",
+      "duration": "6s"
+    },
+    {
+      "type": "text",
+      "text": "副標題描述",
+      "font_family": "Arial",
+      "font_size": "4 vh",
+      "fill_color": "#ffffff",
+      "background_color": "rgba(0,0,0,0.5)",
+      "background_x_padding": "15%",
+      "background_y_padding": "8%",
+      "x": "50%",
+      "y": "80%",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "time": "2s",
+      "duration": "5s"
     }
   ]
 }`
@@ -773,23 +884,84 @@ const JSONTest: React.FC = () => {
   "output_format": "mp4",
   "width": 1920,
   "height": 1080,
-  "duration": "5 s",
+  "duration": "10s",
   "elements": [
     {
       "type": "video",
       "track": 1,
-      "source": "https://creatomate-static.s3.amazonaws.com/demo/video1.mp4"
+      "source": "https://creatomate-static.s3.amazonaws.com/demo/video1.mp4",
+      "fit": "cover",
+      "duration": "10s"
     },
     {
       "type": "text",
-      "text": "視頻疊加層",
+      "text": "視頻開場",
       "font_family": "Arial",
       "font_size": "8 vh",
-      "fill_color": "#ff0000",
+      "font_weight": "700",
+      "fill_color": "#ffffff",
+      "stroke_color": "#000000",
+      "stroke_width": "2px",
       "x": "50%",
-      "y": "20%",
+      "y": "30%",
       "x_alignment": "50%",
-      "y_alignment": "50%"
+      "y_alignment": "50%",
+      "time": "0s",
+      "duration": "3s",
+      "animations": [
+        {
+          "time": "start",
+          "duration": 1,
+          "easing": "quadratic-out",
+          "type": "fade"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "精彩內容",
+      "font_family": "Arial",
+      "font_size": "6 vh",
+      "fill_color": "#ffff00",
+      "x": "50%",
+      "y": "70%",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "time": "3s",
+      "duration": "4s",
+      "animations": [
+        {
+          "time": "start",
+          "duration": 0.8,
+          "easing": "quadratic-out",
+          "type": "slide",
+          "direction": "left"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "感謝觀看",
+      "font_family": "Arial",
+      "font_size": "7 vh",
+      "font_weight": "700",
+      "fill_color": "#ff6600",
+      "x": "50%",
+      "y": "50%",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "time": "7s",
+      "duration": "3s",
+      "animations": [
+        {
+          "time": "start",
+          "duration": 1.2,
+          "easing": "elastic-out",
+          "type": "scale",
+          "start_scale": "50%",
+          "end_scale": "100%"
+        }
+      ]
     }
   ]
 }`
@@ -826,6 +998,12 @@ const JSONTest: React.FC = () => {
                   {example.name}
                 </ExampleButton>
               ))}
+              <CopyApiButton
+                onClick={copyApiRequest}
+                disabled={!jsonInput.trim()}
+              >
+                複製 API 請求
+              </CopyApiButton>
             </ButtonGroup>
             
             <JSONTextarea
@@ -844,6 +1022,7 @@ const JSONTest: React.FC = () => {
             <SectionTitle>視頻預覽</SectionTitle>
             
             {error && <ErrorMessage>{error}</ErrorMessage>}
+            {copySuccess && <SuccessMessage>✅ API 請求已複製到剪貼板</SuccessMessage>}
             
             <PreviewContainer
               ref={(element) => {
@@ -1002,6 +1181,26 @@ const ExampleButton = styled.button`
   }
 `;
 
+const CopyApiButton = styled.button`
+  padding: 8px 16px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  
+  &:hover:not(:disabled) {
+    background: #45a049;
+  }
+  
+  &:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+`;
+
 const JSONTextarea = styled.textarea`
   flex: 1;
   font-family: 'Monaco', 'Menlo', monospace;
@@ -1032,6 +1231,16 @@ const ErrorMessage = styled.div`
   border-radius: 4px;
   margin-bottom: 20px;
   font-size: 14px;
+`;
+
+const SuccessMessage = styled.div`
+  color: #4caf50;
+  background: #e8f5e8;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const LoadingIndicator = styled.div`

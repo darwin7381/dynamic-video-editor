@@ -1,14 +1,18 @@
-# Video Preview Demo
+# Dynamic Video Editor
 
-Add video rendering to your web apps! Seamlessly integrate our video renderer into your software and provide your users with video editing functionality – right in the browser.
+Add video rendering to your web apps! Seamlessly integrate video renderer into your software and provide your users with video editing functionality – right in the browser.
 
-This is a demo application showing how a dynamic video can be previewed in the browser using the [Preview SDK](https://creatomate.com/javascript-video-sdk). The code can be used as a basis for creating your own video editor applications using Creatomate's API.
+This is a dynamic video editor application that allows video preview and editing in the browser using the [Creatomate Preview SDK](https://creatomate.com/javascript-video-sdk). Built with Next.js and TypeScript for modern web development.
 
-## Demo
+## Features
 
-Try it out live: https://video-preview-demo.vercel.app
+- Real-time video preview in browser
+- Dynamic video editing capabilities  
+- Template-based video generation
+- Responsive design with modern UI
+- Built with Next.js and TypeScript
 
-The **Create Video** button is disabled in the live demo as this requires an API key. To run the example with your own API key, follow the instructions below.
+To run this application with full functionality, you'll need a Creatomate API key. Follow the setup instructions below.
 
 ## Usage
 
@@ -50,7 +54,7 @@ Install the Preview SDK using the following command:
 npm install @creatomate/preview
 ```
 
-Please refer to [App.tsx](https://github.com/Creatomate/video-preview-demo/blob/main/components/App.tsx) to see an example of how to initialize the SDK.
+Please refer to [App.tsx](https://github.com/darwin7381/dynamic-video-editor/blob/main/components/App.tsx) to see an example of how to initialize the SDK.
 
 ## Issues & Comments
 
@@ -58,4 +62,4 @@ Feel free to contact us if you encounter any issues with this demo or Creatomate
 
 ## License
 
-This demo is licensed under the MIT license. Please refer to the [LICENSE](https://github.com/Creatomate/video-preview-demo/blob/main/LICENSE) for more information.
+This project is licensed under the MIT license. Please refer to the [LICENSE](https://github.com/darwin7381/dynamic-video-editor/blob/main/LICENSE) for more information.

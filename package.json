@@ -1,7 +1,7 @@
 {
-  "name": "video-preview-demo",
+  "name": "dynamic-video-editor",
   "version": "1.0.0",
-  "author": "Creatomate",
+  "author": "darwin7381",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
