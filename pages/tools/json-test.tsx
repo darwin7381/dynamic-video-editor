@@ -280,8 +280,13 @@ const JSONTest: React.FC = () => {
           // 檢查是否有template ID環境變數，如果有就先載入template作為基礎
           if (process.env.NEXT_PUBLIC_TEMPLATE_ID) {
             console.log('先載入基礎模板...');
-            await preview.loadTemplate(process.env.NEXT_PUBLIC_TEMPLATE_ID);
-            console.log('基礎模板載入完成');
+            try {
+              await preview.loadTemplate(process.env.NEXT_PUBLIC_TEMPLATE_ID);
+              console.log('基礎模板載入完成');
+            } catch (templateError) {
+              console.warn('基礎模板載入失敗，繼續使用 JSON 直接輸入:', templateError);
+              // 不拋出錯誤，允許繼續進行 JSON 直接輸入
+            }
           }
           
           // 然後設置我們的JSON
