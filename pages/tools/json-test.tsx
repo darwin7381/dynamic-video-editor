@@ -5,6 +5,8 @@ import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
 
 const JSONTest: React.FC = () => {
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importJsonInput, setImportJsonInput] = useState('');
   const [jsonInput, setJsonInput] = useState(`{
   "output_format": "mp4",
   "width": 1280,
@@ -829,6 +831,52 @@ const JSONTest: React.FC = () => {
     }
   };
 
+  // 匯入 JSON 請求格式
+  const importApiRequest = () => {
+    setShowImportModal(true);
+    setImportJsonInput('');
+  };
+
+  // 處理匯入 JSON 請求
+  const handleImportApiRequest = () => {
+    try {
+      // 解析輸入的 API 請求 JSON
+      const apiRequest = JSON.parse(importJsonInput);
+      
+      // 檢查是否包含 source 字段
+      if (!apiRequest.source) {
+        setError('匯入失敗：JSON 格式不正確，缺少 source 字段');
+        return;
+      }
+      
+      // 提取 source 部分
+      const sourceJson = apiRequest.source;
+      
+      // 轉換為編輯器格式的 JSON 字符串
+      const editorJsonString = JSON.stringify(sourceJson, null, 2);
+      
+      // 更新編輯器內容
+      setJsonInput(editorJsonString);
+      
+      // 關閉彈窗
+      setShowImportModal(false);
+      setImportJsonInput('');
+      
+      // 清除錯誤
+      setError(null);
+      
+      console.log('API 請求已成功匯入到編輯器');
+      
+    } catch (err) {
+      console.error('匯入 API 請求失敗:', err);
+      if (err instanceof SyntaxError) {
+        setError('JSON 語法錯誤，請檢查輸入格式');
+      } else {
+        setError('匯入失敗，請重試');
+      }
+    }
+  };
+
   const examples = [
     {
       name: '載入示例',
@@ -1135,6 +1183,11 @@ const JSONTest: React.FC = () => {
               >
                 複製 api 請求
               </CopyApiButton>
+              <ImportApiButton
+                onClick={importApiRequest}
+              >
+                匯入 JSON 請求
+              </ImportApiButton>
             </ButtonGroup>
             
             <JSONTextarea
@@ -1201,6 +1254,45 @@ const JSONTest: React.FC = () => {
             )}
           </RightPanel>
         </MainContent>
+
+        {/* 匯入 JSON 請求彈窗 */}
+        {showImportModal && (
+          <ModalOverlay onClick={() => setShowImportModal(false)}>
+            <ModalContent onClick={(e) => e.stopPropagation()}>
+              <ModalHeader>
+                <ModalTitle>匯入 JSON 請求</ModalTitle>
+                <CloseModalButton onClick={() => setShowImportModal(false)}>×</CloseModalButton>
+              </ModalHeader>
+              <ModalBody>
+                <ModalDescription>
+                  請貼入完整的 API 請求格式 JSON（包含 source 和 output_format）
+                </ModalDescription>
+                <ImportTextarea
+                  value={importJsonInput}
+                  onChange={(e) => setImportJsonInput(e.target.value)}
+                  placeholder={`請貼入如下格式的 JSON：
+{
+  "source": {
+    "outputFormat": "mp4",
+    "width": 1920,
+    "height": 1080,
+    "elements": [...]
+  },
+  "output_format": "mp4"
+}`}
+                />
+              </ModalBody>
+              <ModalFooter>
+                <CancelButton onClick={() => setShowImportModal(false)}>
+                  取消
+                </CancelButton>
+                <ImportButton onClick={handleImportApiRequest}>
+                  匯入
+                </ImportButton>
+              </ModalFooter>
+            </ModalContent>
+          </ModalOverlay>
+        )}
       </Container>
     </div>
   );
@@ -1312,6 +1404,25 @@ const ExampleButton = styled.button`
 `;
 
 const CopyApiButton = styled.button`
+  padding: 8px 16px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: #45a049;
+  }
+  
+  &:active {
+    background: #3d8b40;
+  }
+`;
+
+const ImportApiButton = styled.button`
   padding: 8px 16px;
   background: #4caf50;
   color: white;
@@ -1497,4 +1608,128 @@ const TypeBadge = styled.div<{ $type: string }>`
   margin-left: auto;
   margin-right: 35px; /* 為 ActiveIndicator 留出空間 */
   align-self: center;
+`;
+
+/* Modal 樣式 */
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+`;
+
+const CloseModalButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    color: #333;
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+`;
+
+const ModalDescription = styled.p`
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.5;
+`;
+
+const ImportTextarea = styled.textarea`
+  width: 100%;
+  height: 300px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 14px;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  resize: vertical;
+  outline: none;
+  
+  &:focus {
+    border-color: #4caf50;
+  }
+`;
+
+const ModalFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e0e0e0;
+`;
+
+const CancelButton = styled.button`
+  padding: 10px 20px;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  
+  &:hover {
+    background: #e0e0e0;
+  }
+`;
+
+const ImportButton = styled.button`
+  padding: 10px 20px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  
+  &:hover {
+    background: #45a049;
+  }
 `; 
