@@ -1,0 +1,296 @@
+{
+  "text": "美国白宫直接把进口中国商品的关税从145%爽拉到245%中美贸易战火直接加大马力连准会主席鲍尔也来补刀说关税拉高会害经济长期受伤还警告这波可能让美国经济同时遇到成长慢失业高通膨标的三重打击然后他最后前催说目前评估不清楚降息想都别想先观望吧结果美股直接炸锅辉达被美国管出口晶片财报巨亏股价暴跌连台积电联电日月光ADR全都跟着赔跌那斯达克单日大跌3%费半更惨跌4%简直血流成河比特币虽然跟着短暂下杀但现在又回战8.4万其他主流币也没崩不过大家都超谨慎你怎么看这件事欢迎留言分享更多细节上洞区新闻看完整内容记得锁定洞区第一时间掌握最新链上动态",
+  "language": "Chinese",
+  "duration": 69.22,
+  "segments": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 3.18,
+      "text": "美国白宫直接把进口中国商品的关税",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 1,
+      "start": 3.18,
+      "end": 6.8,
+      "text": "从145%爽拉到245%",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 2,
+      "start": 6.8,
+      "end": 9.34,
+      "text": "中美贸易战火直接加大马力",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 3,
+      "start": 9.34,
+      "end": 12.2,
+      "text": "连准会主席鲍尔也来补刀",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 4,
+      "start": 12.2,
+      "end": 15.9,
+      "text": "说关税拉高会害经济长期受伤",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 5,
+      "start": 15.9,
+      "end": 20.22,
+      "text": "还警告这波可能让美国经济同时遇到成长慢",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 6,
+      "start": 20.22,
+      "end": 23.22,
+      "text": "失业高通膨标的三重打击",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 7,
+      "start": 23.22,
+      "end": 25.46,
+      "text": "然后他最后前催说",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 8,
+      "start": 25.46,
+      "end": 27.06,
+      "text": "目前评估不清楚",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 9,
+      "start": 27.06,
+      "end": 28.74,
+      "text": "降息想都别想",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 10,
+      "start": 28.74,
+      "end": 29.72,
+      "text": "先观望吧",
+      "avg_logprob": -0.10773515,
+      "compression_ratio": 1.2178571,
+      "no_speech_prob": 0.27486563
+    },
+    {
+      "id": 11,
+      "start": 29.72,
+      "end": 32.06,
+      "text": "结果美股直接炸锅",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 12,
+      "start": 32.06,
+      "end": 34.28,
+      "text": "辉达被美国管出口晶片",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 13,
+      "start": 34.28,
+      "end": 35.52,
+      "text": "财报巨亏",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 14,
+      "start": 35.52,
+      "end": 36.7,
+      "text": "股价暴跌",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 15,
+      "start": 36.7,
+      "end": 37.78,
+      "text": "连台积电",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 16,
+      "start": 37.78,
+      "end": 38.46,
+      "text": "联电",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 17,
+      "start": 38.46,
+      "end": 39.4,
+      "text": "日月光",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 18,
+      "start": 39.4,
+      "end": 40.3,
+      "text": "ADR",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 19,
+      "start": 40.3,
+      "end": 41.5,
+      "text": "全都跟着赔跌",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 20,
+      "start": 41.5,
+      "end": 45.32,
+      "text": "那斯达克单日大跌3%",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 21,
+      "start": 45.32,
+      "end": 47.62,
+      "text": "费半更惨跌4%",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 22,
+      "start": 47.62,
+      "end": 49.38,
+      "text": "简直血流成河",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 23,
+      "start": 49.38,
+      "end": 52.24,
+      "text": "比特币虽然跟着短暂下杀",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 24,
+      "start": 52.24,
+      "end": 54.36,
+      "text": "但现在又回战8.4万",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 25,
+      "start": 54.36,
+      "end": 55.94,
+      "text": "其他主流币也没崩",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 26,
+      "start": 55.94,
+      "end": 57.48,
+      "text": "不过大家都超谨慎",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 27,
+      "start": 57.48,
+      "end": 58.68,
+      "text": "你怎么看这件事",
+      "avg_logprob": -0.11001808,
+      "compression_ratio": 1.1592592,
+      "no_speech_prob": 0.39991656
+    },
+    {
+      "id": 28,
+      "start": 58.68,
+      "end": 60.32,
+      "text": "欢迎留言分享",
+      "avg_logprob": -0.08563959,
+      "compression_ratio": 0.98275864,
+      "no_speech_prob": 0.19618304
+    },
+    {
+      "id": 29,
+      "start": 60.32,
+      "end": 63.26,
+      "text": "更多细节上洞区新闻看完整内容",
+      "avg_logprob": -0.08563959,
+      "compression_ratio": 0.98275864,
+      "no_speech_prob": 0.19618304
+    },
+    {
+      "id": 30,
+      "start": 63.26,
+      "end": 65.56,
+      "text": "记得锁定洞区",
+      "avg_logprob": -0.08563959,
+      "compression_ratio": 0.98275864,
+      "no_speech_prob": 0.19618304
+    },
+    {
+      "id": 31,
+      "start": 65.56,
+      "end": 68.56,
+      "text": "第一时间掌握最新链上动态",
+      "avg_logprob": -0.08563959,
+      "compression_ratio": 0.98275864,
+      "no_speech_prob": 0.19618304
+    }
+  ],
+  "words": null
+}

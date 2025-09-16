@@ -1,0 +1,36 @@
+[
+  {
+    "method": "whisper-1_original_srt",
+    "processing_time": 8.368819952011108,
+    "quality": {
+      "segment_count": 26,
+      "avg_length": 10.307692307692308,
+      "max_length": 19,
+      "min_length": 6
+    },
+    "success": true
+  },
+  {
+    "method": "whisper-1_word_level_custom",
+    "processing_time": 8.640464067459106,
+    "quality": {
+      "segment_count": 24,
+      "avg_length": 10.958333333333334,
+      "max_length": 15,
+      "min_length": 8
+    },
+    "success": true
+  },
+  {
+    "method": "gpt-4o-transcribe",
+    "processing_time": 6.188202142715454,
+    "text_length": 299,
+    "success": true
+  },
+  {
+    "method": "gpt-4o-mini-transcribe",
+    "processing_time": 5.9207258224487305,
+    "text_length": 268,
+    "success": true
+  }
+]

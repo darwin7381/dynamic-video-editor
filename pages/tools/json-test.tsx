@@ -56,7 +56,6 @@ const JSONTest: React.FC = () => {
   const [previewReady, setPreviewReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copySuccess, setCopySuccess] = useState(false);
   const [currentState, setCurrentState] = useState<PreviewState>();
   const [timelineElements, setTimelineElements] = useState<Array<{
     id: string;
@@ -287,8 +286,31 @@ const JSONTest: React.FC = () => {
           
           // 然後設置我們的JSON
           const source = JSON.parse(jsonInput);
-          console.log('設置JSON source:', source);
-          await preview.setSource(source);
+          console.log('原始JSON source:', source);
+          
+          // 檢查並轉換駝峰命名為蛇形命名（Creatomate Preview SDK 需要）
+          const convertToSnakeCase = (obj: any): any => {
+            if (Array.isArray(obj)) {
+              return obj.map(item => convertToSnakeCase(item));
+            } else if (obj !== null && typeof obj === 'object') {
+              const newObj: any = {};
+              for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                  // 轉換 camelCase 為 snake_case
+                  const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+                  newObj[snakeKey] = convertToSnakeCase(obj[key]);
+                }
+              }
+              return newObj;
+            }
+            return obj;
+          };
+          
+          // 轉換格式以供 Preview SDK 使用
+          const convertedSource = convertToSnakeCase(source);
+          console.log('轉換後的JSON source:', convertedSource);
+          
+          await preview.setSource(convertedSource);
           console.log('JSON設置完成');
           
           // 解析時間軸元素
@@ -364,8 +386,27 @@ const JSONTest: React.FC = () => {
         throw new Error('缺少或無效的 elements 陣列');
       }
       
-      console.log('開始載入到預覽...');
-      await previewRef.current.setSource(source);
+      // 轉換駝峰命名為蛇形命名（Creatomate Preview SDK 需要）
+      const convertToSnakeCase = (obj: any): any => {
+        if (Array.isArray(obj)) {
+          return obj.map(item => convertToSnakeCase(item));
+        } else if (obj !== null && typeof obj === 'object') {
+          const newObj: any = {};
+          for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+              // 轉換 camelCase 為 snake_case
+              const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+              newObj[snakeKey] = convertToSnakeCase(obj[key]);
+            }
+          }
+          return newObj;
+        }
+        return obj;
+      };
+      
+      const convertedSource = convertToSnakeCase(source);
+      console.log('開始載入到預覽...', convertedSource);
+      await previewRef.current.setSource(convertedSource);
       console.log('預覽載入成功');
       
     } catch (err) {
@@ -393,8 +434,27 @@ const JSONTest: React.FC = () => {
           const elements = parseTimelineElements(source);
           setTimelineElements(elements);
           
+          // 轉換駝峰命名為蛇形命名（Creatomate Preview SDK 需要）
+          const convertToSnakeCase = (obj: any): any => {
+            if (Array.isArray(obj)) {
+              return obj.map(item => convertToSnakeCase(item));
+            } else if (obj !== null && typeof obj === 'object') {
+              const newObj: any = {};
+              for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                  // 轉換 camelCase 為 snake_case
+                  const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+                  newObj[snakeKey] = convertToSnakeCase(obj[key]);
+                }
+              }
+              return newObj;
+            }
+            return obj;
+          };
+          
           // 然後更新預覽源
-          await previewRef.current!.setSource(source);
+          const convertedSource = convertToSnakeCase(source);
+          await previewRef.current!.setSource(convertedSource);
           
           console.log('JSON更新成功，時間軸元素:', elements.length);
         } catch (err) {
@@ -720,56 +780,44 @@ const JSONTest: React.FC = () => {
     }
   };
 
-  // 複製 API 請求格式
+  // 複製 API 請求格式 - 完全按照用戶提供的範例格式
   const copyApiRequest = async () => {
     try {
       // 解析當前的 JSON 輸入
-      const currentSource = JSON.parse(jsonInput);
+      const inputSource = JSON.parse(jsonInput);
       
-      // 轉換屬性名稱：將 snake_case 轉換為 camelCase
-      const convertToCamelCase = (obj: any): any => {
-        if (Array.isArray(obj)) {
-          return obj.map(convertToCamelCase);
-        } else if (obj !== null && typeof obj === 'object') {
-          const converted: any = {};
-          for (const [key, value] of Object.entries(obj)) {
-            // 轉換 snake_case 到 camelCase
-            const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-            converted[camelKey] = convertToCamelCase(value);
-          }
-          return converted;
-        }
-        return obj;
-      };
-
-      // 轉換源對象
-      const convertedSource = convertToCamelCase(currentSource);
-      
-      // 包裝成 API 請求格式
+      // 完全按照你的範例格式包裝成 API 請求格式
+      // 你的範例: {"source": {"outputFormat": "mp4", ...}, "output_format": "mp4"}
       const apiRequest = {
-        source: convertedSource,
-        output_format: "mp4"
+        source: inputSource,  // 直接使用輸入的 JSON 作為 source
+        output_format: inputSource.output_format || "mp4"
       };
-
+      
       // 轉換為 JSON 字符串
-      const apiRequestJson = JSON.stringify(apiRequest, null, 2);
+      const apiRequestString = JSON.stringify(apiRequest, null, 2);
       
       // 複製到剪貼板
-      await navigator.clipboard.writeText(apiRequestJson);
+      await navigator.clipboard.writeText(apiRequestString);
       
-      // 顯示成功訊息
+      // 顯示成功消息
       console.log('API 請求已複製到剪貼板');
-      setCopySuccess(true);
       
-      // 清除成功提示
-      setTimeout(() => {
-        setCopySuccess(false);
-      }, 2000);
+      // 視覺反饋
+      const button = document.querySelector('[data-copy-api-button]') as HTMLButtonElement;
+      if (button) {
+        const originalText = button.textContent;
+        button.textContent = '已複製！';
+        button.style.background = '#45a049';
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.background = '#4caf50';
+        }, 2000);
+      }
       
     } catch (err) {
       console.error('複製 API 請求失敗:', err);
       if (err instanceof SyntaxError) {
-        setError('JSON 格式錯誤，無法生成 API 請求');
+        setError('JSON 格式錯誤，無法複製 API 請求');
       } else {
         setError('複製失敗，請重試');
       }
@@ -780,49 +828,100 @@ const JSONTest: React.FC = () => {
     {
       name: '載入示例',
       json: `{
-  "output_format": "mp4",
-  "width": 1280,
-  "height": 720,
-  "duration": "6s",
+  "outputFormat": "mp4",
+  "width": 1920,
+  "height": 1080,
+  "fillColor": "#262626",
   "elements": [
     {
-      "type": "text",
-      "text": "第一段文字",
-      "font_family": "Arial",
-      "font_size": "48px",
-      "fill_color": "#ffffff",
-      "x": "50%",
-      "y": "40%",
-      "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "0s",
-      "duration": "2s"
+      "type": "video",
+      "source": "https://creatomate.com/files/assets/c16f42db-7b5b-4ab7-9625-bc869fae623d.mp4",
+      "fit": "cover"
     },
     {
       "type": "text",
-      "text": "第二段文字",
-      "font_family": "Arial",
-      "font_size": "48px",
-      "fill_color": "#ffff00",
-      "x": "50%",
-      "y": "60%",
+      "name": "subtitle",
+      "text": "歡迎使用 Creatomate 視頻編輯器",
+      "font_family": "Noto Sans TC",
+      "font_size": "5.5 vmin",
+      "font_size_minimum": "5 vmin",
+      "line_height": "126%",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
       "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "2s",
-      "duration": "2s"
+      "y": "70.3388%",
+      "width": "83.1194%",
+      "background_color": "rgba(19,19,19,0.7)",
+      "time": "0 s",
+      "duration": "3 s"
     },
     {
       "type": "text",
-      "text": "第三段文字",
-      "font_family": "Arial",
-      "font_size": "48px",
-      "fill_color": "#ff6600",
-      "x": "50%",
-      "y": "50%",
+      "name": "subtitle",
+      "text": "這是一個功能強大的工具",
+      "font_family": "Noto Sans TC",
+      "font_size": "5.5 vmin",
+      "font_size_minimum": "5 vmin",
+      "line_height": "126%",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
       "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "4s",
-      "duration": "2s"
+      "y": "70.3388%",
+      "width": "83.1194%",
+      "background_color": "rgba(19,19,19,0.7)",
+      "time": "3 s",
+      "duration": "3 s"
+    },
+    {
+      "type": "text",
+      "name": "subtitle",
+      "text": "支援即時預覽和編輯",
+      "font_family": "Noto Sans TC",
+      "font_size": "5.5 vmin",
+      "font_size_minimum": "5 vmin",
+      "line_height": "126%",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y": "70.3388%",
+      "width": "83.1194%",
+      "background_color": "rgba(19,19,19,0.7)",
+      "time": "6 s",
+      "duration": "3 s"
+    },
+    {
+      "type": "text",
+      "name": "subtitle",
+      "text": "讓創作變得更簡單",
+      "font_family": "Noto Sans TC",
+      "font_size": "5.5 vmin",
+      "font_size_minimum": "5 vmin",
+      "line_height": "126%",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y": "70.3388%",
+      "width": "83.1194%",
+      "background_color": "rgba(19,19,19,0.7)",
+      "time": "9 s",
+      "duration": "3 s"
+    },
+    {
+      "type": "text",
+      "name": "subtitle",
+      "text": "開始你的創作之旅吧！",
+      "font_family": "Noto Sans TC",
+      "font_size": "5.5 vmin",
+      "font_size_minimum": "5 vmin",
+      "line_height": "126%",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y": "70.3388%",
+      "width": "83.1194%",
+      "background_color": "rgba(19,19,19,0.7)",
+      "time": "12 s",
+      "duration": "3 s"
     }
   ]
 }`
@@ -830,50 +929,76 @@ const JSONTest: React.FC = () => {
     {
       name: '從文件載入',
       json: `{
-  "output_format": "mp4",
+  "outputFormat": "mp4",
   "width": 1920,
   "height": 1080,
-  "duration": "8s",
+  "fillColor": "#000000",
   "elements": [
     {
       "type": "image",
-      "track": 1,
       "source": "https://creatomate-static.s3.amazonaws.com/demo/image1.jpg",
       "fit": "cover",
-      "duration": "8s"
+      "time": "0 s",
+      "duration": "4 s"
     },
     {
       "type": "text",
-      "text": "圖片標題",
-      "font_family": "Arial",
+      "name": "title",
+      "text": "圖片展示範例",
+      "font_family": "Noto Sans TC",
       "font_size": "6 vh",
       "font_weight": "700",
-      "fill_color": "#ffffff",
-      "background_color": "rgba(0,0,0,0.7)",
-      "background_x_padding": "20%",
-      "background_y_padding": "10%",
-      "x": "50%",
-      "y": "20%",
+      "fill_color": "#FFFFFF",
       "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "1s",
-      "duration": "6s"
+      "y": "20%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "0.5 s",
+      "duration": "3 s"
+    },
+    {
+      "type": "image",
+      "source": "https://creatomate-static.s3.amazonaws.com/demo/harshil-gudka-77zGnfU_SFU-unsplash.jpg",
+      "fit": "cover",
+      "time": "4 s",
+      "duration": "4 s"
     },
     {
       "type": "text",
-      "text": "副標題描述",
-      "font_family": "Arial",
-      "font_size": "4 vh",
-      "fill_color": "#ffffff",
-      "background_color": "rgba(0,0,0,0.5)",
-      "background_x_padding": "15%",
-      "background_y_padding": "8%",
-      "x": "50%",
-      "y": "80%",
+      "name": "subtitle",
+      "text": "第二張圖片",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
       "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "2s",
-      "duration": "5s"
+      "y": "20%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "4.5 s",
+      "duration": "3 s"
+    },
+    {
+      "type": "image",
+      "source": "https://creatomate-static.s3.amazonaws.com/demo/samuel-ferrara-1527pjeb6jg-unsplash.jpg",
+      "fit": "cover",
+      "time": "8 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "name": "ending",
+      "text": "感謝觀看",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y": "50%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "8.5 s",
+      "duration": "3 s"
     }
   ]
 }`
@@ -881,87 +1006,88 @@ const JSONTest: React.FC = () => {
     {
       name: '載入新的JSON',
       json: `{
-  "output_format": "mp4",
+  "outputFormat": "mp4",
   "width": 1920,
   "height": 1080,
-  "duration": "10s",
+  "fillColor": "#1a1a1a",
   "elements": [
     {
       "type": "video",
-      "track": 1,
       "source": "https://creatomate-static.s3.amazonaws.com/demo/video1.mp4",
       "fit": "cover",
-      "duration": "10s"
+      "time": "0 s",
+      "duration": "10 s"
     },
     {
       "type": "text",
-      "text": "視頻開場",
-      "font_family": "Arial",
+      "name": "main-title",
+      "text": "專業視頻編輯工具",
+      "font_family": "Noto Sans TC",
       "font_size": "8 vh",
-      "font_weight": "700",
-      "fill_color": "#ffffff",
-      "stroke_color": "#000000",
-      "stroke_width": "2px",
-      "x": "50%",
-      "y": "30%",
+      "font_weight": "900",
+      "fill_color": "#FFD700",
       "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "0s",
-      "duration": "3s",
-      "animations": [
-        {
-          "time": "start",
-          "duration": 1,
-          "easing": "quadratic-out",
-          "type": "fade"
-        }
-      ]
+      "y": "25%",
+      "width": "90%",
+      "time": "1 s",
+      "duration": "4 s"
     },
     {
       "type": "text",
-      "text": "精彩內容",
-      "font_family": "Arial",
-      "font_size": "6 vh",
-      "fill_color": "#ffff00",
-      "x": "50%",
+      "name": "subtitle",
+      "text": "讓創作變得更簡單、更專業",
+      "font_family": "Noto Sans TC",
+      "font_size": "5 vh",
+      "font_weight": "600",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y": "40%",
+      "width": "90%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "3 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "name": "feature1",
+      "text": "✓ 即時預覽功能",
+      "font_family": "Noto Sans TC",
+      "font_size": "4 vh",
+      "font_weight": "500",
+      "fill_color": "#4CAF50",
+      "x_alignment": "50%",
+      "y": "60%",
+      "width": "80%",
+      "time": "5 s",
+      "duration": "3 s"
+    },
+    {
+      "type": "text",
+      "name": "feature2",
+      "text": "✓ 豐富的動畫效果",
+      "font_family": "Noto Sans TC",
+      "font_size": "4 vh",
+      "font_weight": "500",
+      "fill_color": "#2196F3",
+      "x_alignment": "50%",
       "y": "70%",
-      "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "3s",
-      "duration": "4s",
-      "animations": [
-        {
-          "time": "start",
-          "duration": 0.8,
-          "easing": "quadratic-out",
-          "type": "slide",
-          "direction": "left"
-        }
-      ]
+      "width": "80%",
+      "time": "6 s",
+      "duration": "3 s"
     },
     {
       "type": "text",
-      "text": "感謝觀看",
-      "font_family": "Arial",
-      "font_size": "7 vh",
-      "font_weight": "700",
-      "fill_color": "#ff6600",
-      "x": "50%",
-      "y": "50%",
+      "name": "cta",
+      "text": "立即開始創作！",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "800",
+      "fill_color": "#FF4444",
       "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "7s",
-      "duration": "3s",
-      "animations": [
-        {
-          "time": "start",
-          "duration": 1.2,
-          "easing": "elastic-out",
-          "type": "scale",
-          "start_scale": "50%",
-          "end_scale": "100%"
-        }
-      ]
+      "y": "85%",
+      "width": "80%",
+      "time": "7.5 s",
+      "duration": "2.5 s"
     }
   ]
 }`
@@ -999,10 +1125,10 @@ const JSONTest: React.FC = () => {
                 </ExampleButton>
               ))}
               <CopyApiButton
+                data-copy-api-button
                 onClick={copyApiRequest}
-                disabled={!jsonInput.trim()}
               >
-                複製 API 請求
+                複製 api 請求
               </CopyApiButton>
             </ButtonGroup>
             
@@ -1022,7 +1148,6 @@ const JSONTest: React.FC = () => {
             <SectionTitle>視頻預覽</SectionTitle>
             
             {error && <ErrorMessage>{error}</ErrorMessage>}
-            {copySuccess && <SuccessMessage>✅ API 請求已複製到剪貼板</SuccessMessage>}
             
             <PreviewContainer
               ref={(element) => {
@@ -1189,15 +1314,14 @@ const CopyApiButton = styled.button`
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  transition: background-color 0.2s ease;
   
-  &:hover:not(:disabled) {
+  &:hover {
     background: #45a049;
   }
   
-  &:disabled {
-    background: #cccccc;
-    cursor: not-allowed;
-    opacity: 0.6;
+  &:active {
+    background: #3d8b40;
   }
 `;
 
@@ -1231,16 +1355,6 @@ const ErrorMessage = styled.div`
   border-radius: 4px;
   margin-bottom: 20px;
   font-size: 14px;
-`;
-
-const SuccessMessage = styled.div`
-  color: #4caf50;
-  background: #e8f5e8;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  font-weight: 500;
 `;
 
 const LoadingIndicator = styled.div`
