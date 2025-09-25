@@ -3,10 +3,14 @@ import Head from 'next/head';
 import Link from 'next/link';
 import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
+import { processMediaUrlsInJson } from '../../utility/mediaProxy';
+import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
 
 const JSONTest: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importJsonInput, setImportJsonInput] = useState('');
+  const [showAssetsModal, setShowAssetsModal] = useState(false);
+  const [selectedAssetType, setSelectedAssetType] = useState<'all' | CreatomateAsset['type']>('all');
   const [jsonInput, setJsonInput] = useState(`{
   "output_format": "mp4",
   "width": 1280,
@@ -393,7 +397,12 @@ const JSONTest: React.FC = () => {
         throw new Error('缺少或無效的 elements 陣列');
       }
       
-      // 轉換駝峰命名為蛇形命名（Creatomate Preview SDK 需要）
+      // 🔧 步驟 1: 處理外部媒體 URL，轉換為代理 URL
+      console.log('處理外部媒體 URL...');
+      const sourceWithProxy = processMediaUrlsInJson(source);
+      console.log('媒體 URL 處理完成:', sourceWithProxy);
+      
+      // 🔧 步驟 2: 轉換駝峰命名為蛇形命名（Creatomate Preview SDK 需要）
       const convertToSnakeCase = (obj: any): any => {
         if (Array.isArray(obj)) {
           return obj.map(item => convertToSnakeCase(item));
@@ -411,7 +420,7 @@ const JSONTest: React.FC = () => {
         return obj;
       };
       
-      const convertedSource = convertToSnakeCase(source);
+      const convertedSource = convertToSnakeCase(sourceWithProxy);
       console.log('開始載入到預覽...', convertedSource);
       await previewRef.current.setSource(convertedSource);
       console.log('預覽載入成功');
@@ -427,6 +436,253 @@ const JSONTest: React.FC = () => {
       setIsLoading(false);
     }
   }, [jsonInput, previewReady]);
+
+  // 🧪 測試外部圖片功能
+  const loadTestImageJson = useCallback(async () => {
+    const testJson = `{
+  "output_format": "mp4",
+  "width": 1920,
+  "height": 1080,
+  "fill_color": "#000000",
+  "elements": [
+    {
+      "type": "image",
+      "source": "https://files.blocktempo.ai/BlockTempo_Daily_v1.5/news_image.jpeg",
+      "fit": "cover",
+      "time": "0 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "name": "title",
+      "text": "圖片展示範例",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "y": "20%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "0.5 s",
+      "duration": "3 s"
+    }
+  ]
+}`;
+    
+    setJsonInput(testJson);
+    
+    // 自動載入
+    if (previewReady && previewRef.current) {
+      try {
+        setError(null);
+        setIsLoading(true);
+        
+        const source = JSON.parse(testJson);
+        console.log('🧪 測試外部圖片 JSON:', source);
+        
+        // 處理外部媒體 URL
+        const sourceWithProxy = processMediaUrlsInJson(source);
+        console.log('🔧 代理處理後:', sourceWithProxy);
+        
+        // 驗證代理 URL 是否可訪問
+        if (sourceWithProxy.elements) {
+          for (const element of sourceWithProxy.elements) {
+            if (element.source && element.source.startsWith('/api/media-proxy')) {
+              console.log('🧪 測試代理 URL:', element.source);
+              try {
+                const testResponse = await fetch(element.source);
+                console.log('🧪 代理 URL 測試結果:', testResponse.status, testResponse.statusText);
+              } catch (err) {
+                console.error('🧪 代理 URL 測試失敗:', err);
+              }
+            }
+          }
+        }
+        
+        // 轉換為蛇形命名
+        const convertToSnakeCase = (obj: any): any => {
+          if (Array.isArray(obj)) {
+            return obj.map(item => convertToSnakeCase(item));
+          } else if (obj !== null && typeof obj === 'object') {
+            const newObj: any = {};
+            for (const key in obj) {
+              if (obj.hasOwnProperty(key)) {
+                const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+                newObj[snakeKey] = convertToSnakeCase(obj[key]);
+              }
+            }
+            return newObj;
+          }
+          return obj;
+        };
+        
+        const convertedSource = convertToSnakeCase(sourceWithProxy);
+        await previewRef.current.setSource(convertedSource);
+        console.log('🎉 測試圖片載入成功！');
+        
+        // 解析時間軸
+        const elements = parseTimelineElements(source);
+        setTimelineElements(elements);
+        
+      } catch (err) {
+        console.error('測試圖片載入失敗:', err);
+        setError(`測試失敗: ${err instanceof Error ? err.message : '未知錯誤'}`);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [previewReady, parseTimelineElements]);
+
+  // 🔧 測試 Base64 圖片功能
+  const loadTestBase64Json = useCallback(async () => {
+    try {
+      setError(null);
+      setIsLoading(true);
+      
+      // 獲取 Base64 圖片
+      const base64Response = await fetch(`/api/media-base64?url=${encodeURIComponent('https://files.blocktempo.ai/BlockTempo_Daily_v1.5/news_image.jpeg')}`);
+      const base64Data = await base64Response.json();
+      
+      if (!base64Data.success) {
+        throw new Error(base64Data.error || 'Base64 轉換失敗');
+      }
+      
+      const testJson = `{
+  "output_format": "mp4",
+  "width": 1920,
+  "height": 1080,
+  "fill_color": "#000000",
+  "elements": [
+    {
+      "type": "image",
+      "source": "${base64Data.dataUrl}",
+      "fit": "cover",
+      "time": "0 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "name": "title",
+      "text": "Base64 圖片測試",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "y": "20%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "0.5 s",
+      "duration": "3 s"
+    }
+  ]
+}`;
+      
+      setJsonInput(testJson);
+      
+      // 自動載入
+      if (previewReady && previewRef.current) {
+        const source = JSON.parse(testJson);
+        console.log('🔧 測試 Base64 圖片 JSON:', source);
+        
+        // Base64 不需要代理處理
+        const convertToSnakeCase = (obj: any): any => {
+          if (Array.isArray(obj)) {
+            return obj.map(item => convertToSnakeCase(item));
+          } else if (obj !== null && typeof obj === 'object') {
+            const newObj: any = {};
+            for (const key in obj) {
+              if (obj.hasOwnProperty(key)) {
+                const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+                newObj[snakeKey] = convertToSnakeCase(obj[key]);
+              }
+            }
+            return newObj;
+          }
+          return obj;
+        };
+        
+        const convertedSource = convertToSnakeCase(source);
+        await previewRef.current.setSource(convertedSource);
+        console.log('🎉 Base64 圖片載入成功！');
+        
+        // 解析時間軸
+        const elements = parseTimelineElements(source);
+        setTimelineElements(elements);
+      }
+      
+    } catch (err) {
+      console.error('Base64 測試失敗:', err);
+      setError(`Base64 測試失敗: ${err instanceof Error ? err.message : '未知錯誤'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [previewReady, parseTimelineElements]);
+
+  // 複製素材 URL 到剪貼簿
+  const copyAssetUrl = async (asset: CreatomateAsset) => {
+    try {
+      await navigator.clipboard.writeText(asset.url);
+      setError(null);
+      // 顯示成功訊息
+      const originalError = error;
+      setError(`✅ 已複製：${asset.name}`);
+      setTimeout(() => setError(originalError), 2000);
+    } catch (err) {
+      setError('複製失敗，請手動複製');
+    }
+  };
+
+  // 載入素材到 JSON 編輯器
+  const loadAssetToJson = (asset: CreatomateAsset) => {
+    const assetJson = `{
+  "output_format": "mp4",
+  "width": 1920,
+  "height": 1080,
+  "fill_color": "#000000",
+  "elements": [
+    {
+      "type": "${asset.type === 'gif' ? 'image' : asset.type}",
+      "source": "${asset.url}",
+      ${asset.type === 'image' || asset.type === 'gif' ? '"fit": "cover",' : ''}
+      "time": "0 s",
+      "duration": "${asset.duration || '4 s'}"
+    },
+    {
+      "type": "text",
+      "name": "title",
+      "text": "${asset.name}",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "y": "20%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "0.5 s",
+      "duration": "3 s"
+    }
+  ]
+}`;
+    
+    setJsonInput(assetJson);
+    setShowAssetsModal(false);
+    
+    // 自動載入預覽
+    if (previewReady && previewRef.current) {
+      loadJSON();
+    }
+  };
+
+  // 獲取篩選後的素材列表
+  const filteredAssets = selectedAssetType === 'all' 
+    ? CREATOMATE_ASSETS 
+    : getAssetsByType(selectedAssetType);
 
   // JSON改變時的即時更新（手動觸發）
   React.useEffect(() => {
@@ -1188,6 +1444,29 @@ const JSONTest: React.FC = () => {
               >
                 匯入 JSON 請求
               </ImportApiButton>
+              
+              <TestImageButton
+                onClick={loadTestImageJson}
+                disabled={!previewReady || isLoading}
+                title="測試外部圖片代理功能"
+              >
+                🧪 測試外部圖片
+              </TestImageButton>
+              
+              <TestBase64Button
+                onClick={loadTestBase64Json}
+                disabled={!previewReady || isLoading}
+                title="測試 Base64 圖片方法"
+              >
+                🔧 測試 Base64
+              </TestBase64Button>
+              
+              <AssetsButton
+                onClick={() => setShowAssetsModal(true)}
+                title="載入 Creatomate 官方素材"
+              >
+                📁 載入素材列表
+              </AssetsButton>
             </ButtonGroup>
             
             <JSONTextarea
@@ -1254,6 +1533,89 @@ const JSONTest: React.FC = () => {
             )}
           </RightPanel>
         </MainContent>
+
+        {/* 素材列表彈窗 */}
+        {showAssetsModal && (
+          <ModalOverlay onClick={() => setShowAssetsModal(false)}>
+            <AssetsModalContent onClick={(e) => e.stopPropagation()}>
+              <ModalHeader>
+                <ModalTitle>📁 Creatomate 官方素材庫</ModalTitle>
+                <CloseModalButton onClick={() => setShowAssetsModal(false)}>×</CloseModalButton>
+              </ModalHeader>
+              
+              <AssetsModalBody>
+                <AssetsDescription>
+                  以下是經過驗證可以在 Creatomate Preview SDK 中正常使用的官方素材。
+                  點擊「載入」可以自動生成包含該素材的 JSON 模板。
+                </AssetsDescription>
+                
+                {/* 類型篩選器 */}
+                <TypeFilter>
+                  <FilterButton 
+                    $active={selectedAssetType === 'all'}
+                    onClick={() => setSelectedAssetType('all')}
+                  >
+                    🎯 全部
+                  </FilterButton>
+                  {getAllTypes().map(type => (
+                    <FilterButton
+                      key={type}
+                      $active={selectedAssetType === type}
+                      onClick={() => setSelectedAssetType(type)}
+                      style={{ color: TYPE_COLORS[type] }}
+                    >
+                      {TYPE_ICONS[type]} {type.toUpperCase()}
+                    </FilterButton>
+                  ))}
+                </TypeFilter>
+                
+                {/* 素材列表 */}
+                <AssetsList>
+                  {filteredAssets.map(asset => (
+                    <AssetItem key={asset.id}>
+                      <AssetInfo>
+                        <AssetHeader>
+                          <AssetTypeIcon style={{ color: TYPE_COLORS[asset.type] }}>
+                            {TYPE_ICONS[asset.type]}
+                          </AssetTypeIcon>
+                          <AssetName>{asset.name}</AssetName>
+                          <AssetCategory>{asset.category}</AssetCategory>
+                        </AssetHeader>
+                        <AssetDescription>{asset.description}</AssetDescription>
+                        <AssetDetails>
+                          {asset.resolution && <AssetDetail>📐 {asset.resolution}</AssetDetail>}
+                          {asset.duration && <AssetDetail>⏱️ {asset.duration}</AssetDetail>}
+                          {asset.size && <AssetDetail>💾 {asset.size}</AssetDetail>}
+                        </AssetDetails>
+                        <AssetUrl>{asset.url}</AssetUrl>
+                      </AssetInfo>
+                      <AssetActions>
+                        <CopyAssetButton
+                          onClick={() => copyAssetUrl(asset)}
+                          title="複製 URL 到剪貼簿"
+                        >
+                          📋 複製
+                        </CopyAssetButton>
+                        <LoadAssetButton
+                          onClick={() => loadAssetToJson(asset)}
+                          title="載入此素材到 JSON 編輯器"
+                        >
+                          📥 載入
+                        </LoadAssetButton>
+                      </AssetActions>
+                    </AssetItem>
+                  ))}
+                </AssetsList>
+                
+                {filteredAssets.length === 0 && (
+                  <NoAssetsMessage>
+                    沒有找到 {selectedAssetType === 'all' ? '' : selectedAssetType.toUpperCase()} 類型的素材
+                  </NoAssetsMessage>
+                )}
+              </AssetsModalBody>
+            </AssetsModalContent>
+          </ModalOverlay>
+        )}
 
         {/* 匯入 JSON 請求彈窗 */}
         {showImportModal && (
@@ -1423,6 +1785,73 @@ const CopyApiButton = styled.button`
 `;
 
 const ImportApiButton = styled.button`
+  padding: 8px 16px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: #45a049;
+  }
+  
+  &:active {
+    background: #3d8b40;
+  }
+`;
+
+const TestImageButton = styled.button`
+  padding: 8px 16px;
+  background: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+  
+  &:hover:not(:disabled) {
+    background: #f57c00;
+  }
+  
+  &:active:not(:disabled) {
+    background: #ef6c00;
+  }
+  
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
+const TestBase64Button = styled.button`
+  padding: 8px 16px;
+  background: #9c27b0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+  
+  &:hover:not(:disabled) {
+    background: #7b1fa2;
+  }
+  
+  &:active:not(:disabled) {
+    background: #6a1b9a;
+  }
+  
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
+const AssetsButton = styled.button`
   padding: 8px 16px;
   background: #4caf50;
   color: white;
@@ -1732,4 +2161,176 @@ const ImportButton = styled.button`
   &:hover {
     background: #45a049;
   }
+`;
+
+// 素材彈窗樣式
+const AssetsModalContent = styled(ModalContent)`
+  width: 90vw;
+  max-width: 1000px;
+  height: 80vh;
+  max-height: 600px;
+`;
+
+const AssetsModalBody = styled.div`
+  padding: 20px;
+  height: calc(100% - 60px);
+  overflow-y: auto;
+`;
+
+const AssetsDescription = styled.p`
+  color: #666;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+  font-size: 14px;
+`;
+
+const TypeFilter = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+`;
+
+const FilterButton = styled.button<{ $active: boolean }>`
+  padding: 6px 12px;
+  border: 1px solid ${props => props.$active ? '#2196f3' : '#ddd'};
+  background: ${props => props.$active ? '#2196f3' : 'white'};
+  color: ${props => props.$active ? 'white' : '#333'};
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: #2196f3;
+    background: ${props => props.$active ? '#1976d2' : '#f0f8ff'};
+  }
+`;
+
+const AssetsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const AssetItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f0f0f0;
+    border-color: #2196f3;
+  }
+`;
+
+const AssetInfo = styled.div`
+  flex: 1;
+  margin-right: 16px;
+`;
+
+const AssetHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+`;
+
+const AssetTypeIcon = styled.span`
+  font-size: 16px;
+`;
+
+const AssetName = styled.h4`
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+`;
+
+const AssetCategory = styled.span`
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+`;
+
+const AssetDescription = styled.p`
+  margin: 0 0 8px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+`;
+
+const AssetDetails = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+`;
+
+const AssetDetail = styled.span`
+  font-size: 12px;
+  color: #888;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+`;
+
+const AssetUrl = styled.div`
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 11px;
+  color: #888;
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  word-break: break-all;
+  border: 1px solid #e0e0e0;
+`;
+
+const AssetActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const CopyAssetButton = styled.button`
+  padding: 6px 12px;
+  background: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  
+  &:hover {
+    background: #f57c00;
+  }
+`;
+
+const LoadAssetButton = styled.button`
+  padding: 6px 12px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  
+  &:hover {
+    background: #45a049;
+  }
+`;
+
+const NoAssetsMessage = styled.div`
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  padding: 40px 20px;
 `; 

@@ -63,6 +63,17 @@ export default function Tools() {
               </CardContent>
             </Link>
           </ToolCard>
+
+          <ToolCard>
+            <Link href="/tools/media-proxy-test">
+              <CardContent>
+                <CardTitle>媒體代理測試工具 →</CardTitle>
+                <CardDescription>
+                  測試媒體代理功能，解決外部圖片/影片在 Creatomate 預覽中的載入問題。
+                </CardDescription>
+              </CardContent>
+            </Link>
+          </ToolCard>
         </ToolsGrid>
       </Container>
     </div>
