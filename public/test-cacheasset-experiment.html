@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>cacheAsset 實驗</title>
+  <script src="https://cdn.creatomate.com/libs/preview/1.6.0/preview.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #preview { width: 800px; height: 450px; background: #000; margin: 20px 0; }
+    pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    button { padding: 10px 20px; margin: 5px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>🧪 cacheAsset 深度實驗</h1>
+  
+  <div id="preview"></div>
+  
+  <h2>測試控制</h2>
+  <button onclick="test1()">測試 1: Google 影片（直接下載 + cacheAsset）</button>
+  <button onclick="test2()">測試 2: 2050today 影片（代理下載 + cacheAsset）</button>
+  <button onclick="test3()">測試 3: GIF（直接下載 + 偽裝 + cacheAsset）</button>
+  <button onclick="test4()">測試 4: GIF 不偽裝（直接下載 + cacheAsset）</button>
+  
+  <h2>日誌</h2>
+  <pre id="log"></pre>
+
+  <script>
+    const PUBLIC_TOKEN = 'public-s28tr0cxnbxb0gmlvzyzn2hu';
+    let preview;
+    let logs = [];
+    
+    function log(msg) {
+      console.log(msg);
+      logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+      document.getElementById('log').textContent = logs.join('\n');
+    }
+    
+    // 初始化
+    const previewContainer = document.getElementById('preview');
+    preview = new Preview(previewContainer, 'player', PUBLIC_TOKEN);
+    
+    preview.onReady = () => {
+      log('✅ Preview SDK 準備就緒');
+    };
+    
+    preview.onLoad = () => log('⏳ 開始載入...');
+    preview.onLoadComplete = () => log('✅ 載入完成');
+    
+    // 測試 1: Google 影片（直接下載）
+    async function test1() {
+      try {
+        log('\n=== 測試 1: Google 影片（有 CORS）===');
+        const url = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+        
+        log('下載中...');
+        const response = await fetch(url);
+        const blob = await response.blob();
+        log(`下載完成: ${blob.size} bytes, type: ${blob.type}`);
+        
+        log('快取中...');
+        await preview.cacheAsset(url, blob);
+        log('✅ 快取成功');
+        
+        log('設定 source...');
+        await preview.setSource({
+          width: 1920,
+          height: 1080,
+          elements: [{
+            type: 'video',
+            source: url,
+            duration: '5 s'
+          }]
+        });
+        log('✅ 測試 1 完全成功！');
+        
+      } catch (e) {
+        log(`❌ 測試 1 失敗: ${e.message}`);
+      }
+    }
+    
+    // 測試 2: 2050today 影片（透過代理）
+    async function test2() {
+      try {
+        log('\n=== 測試 2: 2050today 影片（無 CORS，用代理）===');
+        const originalUrl = 'https://2050today.org/wp-content/uploads/2020/07/Video-Placeholder.mp4?_=6';
+        const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(originalUrl)}`;
+        
+        log('透過代理下載中...');
+        const response = await fetch(proxyUrl);
+        log(`代理回應: ${response.status} ${response.statusText}`);
+        log(`Content-Type: ${response.headers.get('content-type')}`);
+        log(`Content-Length: ${response.headers.get('content-length')}`);
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const contentType = response.headers.get('content-type') || 'video/mp4';
+        const blob = new Blob([arrayBuffer], { type: contentType });
+        
+        log(`Blob 創建: ${blob.size} bytes, type: ${blob.type}`);
+        
+        log('快取中...');
+        await preview.cacheAsset(originalUrl, blob);
+        log('✅ 快取成功');
+        
+        log('設定 source...');
+        await preview.setSource({
+          width: 1920,
+          height: 1080,
+          elements: [{
+            type: 'video',
+            source: originalUrl,
+            duration: '5 s'
+          }]
+        });
+        log('✅ 測試 2 完全成功！');
+        
+      } catch (e) {
+        log(`❌ 測試 2 失敗: ${e.message}`);
+        console.error('詳細錯誤:', e);
+      }
+    }
+    
+    // 測試 3: GIF 偽裝成 MP4
+    async function test3() {
+      try {
+        log('\n=== 測試 3: GIF 偽裝成 MP4 ===');
+        const gifUrl = 'https://media.tenor.com/EOhh4Dv9AdUAAAAM/point-at-you-point.gif';
+        const fakeUrl = gifUrl.replace('.gif', '.mp4?gif=' + Date.now());
+        
+        log('下載 GIF...');
+        const response = await fetch(gifUrl);
+        const gifBlob = await response.blob();
+        log(`GIF 下載完成: ${gifBlob.size} bytes, type: ${gifBlob.type}`);
+        
+        // 偽裝成 MP4
+        const arrayBuffer = await gifBlob.arrayBuffer();
+        const fakeBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
+        log(`偽裝 Blob: ${fakeBlob.size} bytes, type: ${fakeBlob.type}`);
+        
+        log(`使用假 URL 快取: ${fakeUrl}`);
+        await preview.cacheAsset(fakeUrl, fakeBlob);
+        log('✅ 快取成功');
+        
+        log('設定 source（使用假 URL）...');
+        await preview.setSource({
+          width: 1920,
+          height: 1080,
+          elements: [{
+            type: 'video',
+            source: fakeUrl,
+            duration: '4 s'
+          }]
+        });
+        log('✅ 測試 3 完全成功！');
+        
+      } catch (e) {
+        log(`❌ 測試 3 失敗: ${e.message}`);
+        console.error('詳細錯誤:', e);
+      }
+    }
+    
+    // 測試 4: GIF 不偽裝（原始）
+    async function test4() {
+      try {
+        log('\n=== 測試 4: GIF 不偽裝（原始 type）===');
+        const gifUrl = 'https://media.tenor.com/EOhh4Dv9AdUAAAAM/point-at-you-point.gif';
+        
+        log('下載 GIF...');
+        const response = await fetch(gifUrl);
+        const blob = await response.blob();
+        log(`GIF 下載完成: ${blob.size} bytes, type: ${blob.type}`);
+        
+        log('快取（原始 type）...');
+        await preview.cacheAsset(gifUrl, blob);
+        log('✅ 快取成功');
+        
+        log('設定 source...');
+        await preview.setSource({
+          width: 1920,
+          height: 1080,
+          elements: [{
+            type: 'video',
+            source: gifUrl,
+            duration: '4 s'
+          }]
+        });
+        log('✅ 測試 4 完全成功！');
+        
+      } catch (e) {
+        log(`❌ 測試 4 失敗: ${e.message}`);
+        console.error('詳細錯誤:', e);
+      }
+    }
+  </script>
+</body>
+</html>
+

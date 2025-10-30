@@ -4,7 +4,7 @@ import Link from 'next/link';
 import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
 import { processMediaUrlsInJson } from '../../utility/mediaProxy';
-import { cacheExternalAssets } from '../../utility/cacheAssetHelper';
+import { cacheExternalAssets, replaceGifUrlsInJson } from '../../utility/cacheAssetHelper';
 import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
 
 const JSONTest: React.FC = () => {
@@ -64,6 +64,10 @@ const JSONTest: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentState, setCurrentState] = useState<PreviewState>();
+  
+  // 🔧 中間處理層：分離使用者輸入與 SDK 實際使用的 JSON
+  const [processedSource, setProcessedSource] = useState<any>(null);  // SDK 實際使用的
+  const [urlMapping, setUrlMapping] = useState<Map<string, string>>(new Map());  // URL 映射記錄
   const [timelineElements, setTimelineElements] = useState<Array<{
     id: string;
     time: number;
@@ -310,12 +314,25 @@ const JSONTest: React.FC = () => {
           console.log('原始JSON source:', source);
           
           // 🔧 使用 cacheAsset 預先快取所有外部素材
-          // 這會處理：1) 有 CORS 的素材（直接下載） 2) 沒有 CORS 的素材（透過代理）
           console.log('🔧 [初始化] 開始快取外部素材...');
           const cacheResult = await cacheExternalAssets(preview, source);
           console.log(`✅ [初始化] 快取完成 - 成功: ${cacheResult.success.length}, 失敗: ${cacheResult.failed.length}`);
           
-          // 檢查並轉換駝峰命名為蛇形命名（Creatomate Preview SDK 需要）
+          // 🔧 中間處理層：創建處理過的 JSON
+          // 保持使用者輸入不變，但 SDK 使用處理過的版本
+          let processedSource = source;
+          
+          // 如果有 URL 映射（GIF 替換等），應用映射
+          if (cacheResult.urlMapping.size > 0) {
+            console.log('🔧 [初始化] 應用 URL 映射...');
+            processedSource = replaceGifUrlsInJson(source, cacheResult.urlMapping);
+            setUrlMapping(cacheResult.urlMapping);  // 儲存映射記錄
+          }
+          
+          // 儲存處理過的 JSON
+          setProcessedSource(processedSource);
+          
+          // 轉換為 snake_case（SDK 需要）
           const convertToSnakeCase = (obj: any): any => {
             if (Array.isArray(obj)) {
               return obj.map(item => convertToSnakeCase(item));
@@ -323,7 +340,6 @@ const JSONTest: React.FC = () => {
               const newObj: any = {};
               for (const key in obj) {
                 if (obj.hasOwnProperty(key)) {
-                  // 轉換 camelCase 為 snake_case
                   const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
                   newObj[snakeKey] = convertToSnakeCase(obj[key]);
                 }
@@ -333,14 +349,13 @@ const JSONTest: React.FC = () => {
             return obj;
           };
           
-          // 轉換格式以供 Preview SDK 使用
-          const convertedSource = convertToSnakeCase(source);
-          console.log('轉換後的JSON source:', convertedSource);
+          const convertedSource = convertToSnakeCase(processedSource);
+          console.log('[中間層] 處理後的 JSON:', convertedSource);
           
           await preview.setSource(convertedSource);
-          console.log('JSON設置完成');
+          console.log('✅ JSON設置完成');
           
-          // 解析時間軸元素
+          // 解析時間軸元素（使用原始 source，顯示給使用者看）
           const elements = parseTimelineElements(source);
           setTimelineElements(elements);
           
@@ -714,11 +729,22 @@ const JSONTest: React.FC = () => {
           const cacheResult = await cacheExternalAssets(previewRef.current!, source);
           console.log(`✅ [即時更新] 快取完成 - 成功: ${cacheResult.success.length}, 失敗: ${cacheResult.failed.length}`);
           
-          // 先解析時間軸元素，避免狀態不同步
+          // 🔧 中間處理層：創建處理過的 JSON
+          let processedSource = source;
+          
+          if (cacheResult.urlMapping.size > 0) {
+            console.log('🔧 [即時更新] 應用 URL 映射...');
+            processedSource = replaceGifUrlsInJson(source, cacheResult.urlMapping);
+            setUrlMapping(cacheResult.urlMapping);
+          }
+          
+          setProcessedSource(processedSource);
+          
+          // 解析時間軸元素（使用原始 source）
           const elements = parseTimelineElements(source);
           setTimelineElements(elements);
           
-          // 轉換駝峰命名為蛇形命名（Creatomate Preview SDK 需要）
+          // 轉換為 snake_case
           const convertToSnakeCase = (obj: any): any => {
             if (Array.isArray(obj)) {
               return obj.map(item => convertToSnakeCase(item));
@@ -726,7 +752,6 @@ const JSONTest: React.FC = () => {
               const newObj: any = {};
               for (const key in obj) {
                 if (obj.hasOwnProperty(key)) {
-                  // 轉換 camelCase 為 snake_case
                   const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
                   newObj[snakeKey] = convertToSnakeCase(obj[key]);
                 }
@@ -736,8 +761,10 @@ const JSONTest: React.FC = () => {
             return obj;
           };
           
-          // 然後更新預覽源
-          const convertedSource = convertToSnakeCase(source);
+          // 使用處理過的 source
+          const convertedSource = convertToSnakeCase(processedSource);
+          console.log('[中間層] 即時更新 - 處理後的 JSON');
+          
           await previewRef.current!.setSource(convertedSource);
           
           console.log('JSON更新成功，時間軸元素:', elements.length);

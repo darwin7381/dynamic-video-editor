@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blob 差異測試</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+    .test { margin: 20px 0; padding: 15px; border: 2px solid #444; }
+    h2 { color: #4ec9b0; }
+    pre { background: #252526; padding: 10px; overflow-x: auto; }
+    .success { color: #4ec9b0; }
+    .error { color: #f48771; }
+  </style>
+</head>
+<body>
+  <h1>🔬 Blob 差異分析</h1>
+  
+  <div class="test">
+    <h2>測試 1: 直接 fetch Google 影片（成功的）</h2>
+    <pre id="test1">測試中...</pre>
+  </div>
+  
+  <div class="test">
+    <h2>測試 2: 透過代理 fetch 2050today 影片（失敗的）</h2>
+    <pre id="test2">測試中...</pre>
+  </div>
+  
+  <div class="test">
+    <h2>測試 3: Blob 比對</h2>
+    <pre id="test3">等待測試完成...</pre>
+  </div>
+
+  <script>
+    let blob1, blob2;
+    
+    async function test1() {
+      try {
+        const url = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+        const response = await fetch(url);
+        blob1 = await response.blob();
+        
+        const result = {
+          url,
+          status: response.status,
+          headers: {
+            'content-type': response.headers.get('content-type'),
+            'content-length': response.headers.get('content-length'),
+            'accept-ranges': response.headers.get('accept-ranges'),
+            'access-control-allow-origin': response.headers.get('access-control-allow-origin'),
+          },
+          blob: {
+            size: blob1.size,
+            type: blob1.type,
+          }
+        };
+        
+        document.getElementById('test1').textContent = JSON.stringify(result, null, 2);
+        document.getElementById('test1').className = 'success';
+      } catch (e) {
+        document.getElementById('test1').textContent = `ERROR: ${e.message}`;
+        document.getElementById('test1').className = 'error';
+      }
+    }
+    
+    async function test2() {
+      try {
+        const originalUrl = 'https://2050today.org/wp-content/uploads/2020/07/Video-Placeholder.mp4?_=6';
+        const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(originalUrl)}`;
+        const response = await fetch(proxyUrl);
+        blob2 = await response.blob();
+        
+        const result = {
+          originalUrl,
+          proxyUrl,
+          status: response.status,
+          headers: {
+            'content-type': response.headers.get('content-type'),
+            'content-length': response.headers.get('content-length'),
+            'accept-ranges': response.headers.get('accept-ranges'),
+            'access-control-allow-origin': response.headers.get('access-control-allow-origin'),
+          },
+          blob: {
+            size: blob2.size,
+            type: blob2.type,
+          }
+        };
+        
+        document.getElementById('test2').textContent = JSON.stringify(result, null, 2);
+        document.getElementById('test2').className = 'success';
+      } catch (e) {
+        document.getElementById('test2').textContent = `ERROR: ${e.message}`;
+        document.getElementById('test2').className = 'error';
+      }
+    }
+    
+    async function test3() {
+      if (!blob1 || !blob2) {
+        document.getElementById('test3').textContent = '前面的測試失敗';
+        return;
+      }
+      
+      // 比對 Blob
+      const comparison = {
+        size: {
+          blob1: blob1.size,
+          blob2: blob2.size,
+          diff: blob1.size - blob2.size,
+          equal: blob1.size === blob2.size
+        },
+        type: {
+          blob1: blob1.type,
+          blob2: blob2.type,
+          equal: blob1.type === blob2.type
+        },
+        // 比對前 100 bytes
+        headerMatch: await (async () => {
+          const arr1 = new Uint8Array(await blob1.slice(0, 100).arrayBuffer());
+          const arr2 = new Uint8Array(await blob2.slice(0, 100).arrayBuffer());
+          
+          let matches = 0;
+          for (let i = 0; i < 100 && i < arr1.length && i < arr2.length; i++) {
+            if (arr1[i] === arr2[i]) matches++;
+          }
+          
+          return {
+            matchBytes: matches,
+            total: 100,
+            percentage: (matches / 100 * 100).toFixed(1) + '%'
+          };
+        })()
+      };
+      
+      document.getElementById('test3').textContent = JSON.stringify(comparison, null, 2);
+    }
+    
+    // 執行測試
+    (async () => {
+      await test1();
+      await test2();
+      await test3();
+    })();
+  </script>
+</body>
+</html>
+

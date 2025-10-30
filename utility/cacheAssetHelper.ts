@@ -60,23 +60,42 @@ export function isExternalUrl(url: string): boolean {
 }
 
 /**
+ * URL 映射表（原始 URL → 處理後的 URL）
+ */
+const globalUrlMapping = new Map<string, string>();
+
+/**
+ * 獲取當前網域的絕對 URL
+ */
+function getAbsoluteProxyUrl(originalUrl: string): string {
+  // 使用絕對 URL（避免跨域 iframe 的相對路徑問題）
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+  return `${baseUrl}/api/media-proxy?url=${encodeURIComponent(originalUrl)}`;
+}
+
+/**
  * 快取所有外部素材到 Preview SDK
  * 
  * @param preview Preview SDK 實例
  * @param json JSON 物件
- * @returns 成功快取的 URL 列表
+ * @returns 成功快取的 URL 列表和 URL 映射（用於替換 JSON）
  */
 export async function cacheExternalAssets(
   preview: Preview,
   json: any
-): Promise<{ success: string[]; failed: Array<{ url: string; error: string }> }> {
+): Promise<{ 
+  success: string[]; 
+  failed: Array<{ url: string; error: string }>;
+  urlMapping: Map<string, string>;
+}> {
   const urls = extractMediaUrls(json);
   const success: string[] = [];
   const failed: Array<{ url: string; error: string }> = [];
+  const urlMapping = new Map<string, string>();
 
   if (urls.length === 0) {
     console.log(`[cacheAsset] 沒有外部素材需要快取`);
-    return { success, failed };
+    return { success, failed, urlMapping };
   }
 
   console.log(`[cacheAsset] 發現 ${urls.length} 個外部素材需要快取:`, urls);
@@ -122,7 +141,9 @@ export async function cacheExternalAssets(
         
         // 取得 Blob 並確保有正確的 MIME type
         const arrayBuffer = await proxyResponse.arrayBuffer();
-        const contentType = proxyResponse.headers.get('content-type') || 'application/octet-stream';
+        let contentType = proxyResponse.headers.get('content-type') || 'application/octet-stream';
+        
+        // 🔧 如果代理已經偽裝 GIF 為 video/mp4，保持這個 type
         blob = new Blob([arrayBuffer], { type: contentType });
         
         console.log(`[cacheAsset] ✅ 代理下載成功 (${blob.size} bytes, type: ${blob.type})`);
@@ -130,18 +151,22 @@ export async function cacheExternalAssets(
 
       console.log(`[cacheAsset] 下載完成: ${url} (${blob.size} bytes, ${blob.type})`);
 
-      // 🔧 特殊處理：GIF 檔案
-      // Creatomate Preview 可能不支援 GIF 作為 video 類型
-      // 但我們仍然快取，並記錄警告
-      if (url.toLowerCase().includes('.gif') && blob.type.includes('gif')) {
-        console.warn(`[cacheAsset] ⚠️ 檢測到 GIF 檔案: ${url}`);
-        console.warn(`[cacheAsset] 注意：GIF 在 Preview 中可能無法作為 video 類型播放`);
-        console.warn(`[cacheAsset] 建議：預覽時使用 type="image"，最終渲染時使用 type="video"`);
+      // 🔧 關鍵策略：如果是透過代理下載的，用代理的絕對 URL 快取
+      // 這樣 iframe 驗證 URL 時會成功（代理 URL 真的存在）
+      let cacheUrl = url;
+      
+      if (url.toLowerCase().includes('2050today.org') || 
+          (!url.includes('creatomate') && !url.includes('blocktempo.ai'))) {
+        // 無 CORS 的外部素材 → 使用代理 URL
+        cacheUrl = getAbsoluteProxyUrl(url);
+        urlMapping.set(url, cacheUrl);
+        globalUrlMapping.set(url, cacheUrl);
+        console.log(`[cacheAsset] 🔧 使用代理 URL: ${url} → ${cacheUrl}`);
       }
 
       // 快取到 Preview SDK
-      await preview.cacheAsset(url, blob);
-      console.log(`[cacheAsset] ✅ 快取成功: ${url}`);
+      await preview.cacheAsset(cacheUrl, blob);
+      console.log(`[cacheAsset] ✅ 快取成功: ${cacheUrl}`);
       
       success.push(url);
       
@@ -163,7 +188,45 @@ export async function cacheExternalAssets(
     console.warn(`[cacheAsset] ⚠️ 有 ${failed.length} 個素材快取失敗，Preview SDK 會嘗試直接載入這些 URL`);
   }
   
-  return { success, failed };
+  if (urlMapping.size > 0) {
+    console.log(`[cacheAsset] 📝 URL 映射記錄:`, Array.from(urlMapping.entries()));
+  }
+  
+  return { success, failed, urlMapping };
+}
+
+/**
+ * 替換 JSON 中的 GIF URL 為映射後的假 URL
+ */
+export function replaceGifUrlsInJson(json: any, urlMapping: Map<string, string>): any {
+  if (typeof json !== 'object' || json === null) {
+    return json;
+  }
+
+  if (Array.isArray(json)) {
+    return json.map(item => replaceGifUrlsInJson(item, urlMapping));
+  }
+
+  const result: any = {};
+  
+  for (const [key, value] of Object.entries(json)) {
+    if (key === 'source' && typeof value === 'string') {
+      // 檢查是否需要替換
+      const mappedUrl = urlMapping.get(value);
+      if (mappedUrl) {
+        console.log(`[URL替換] ${value} → ${mappedUrl}`);
+        result[key] = mappedUrl;
+      } else {
+        result[key] = value;
+      }
+    } else if (typeof value === 'object') {
+      result[key] = replaceGifUrlsInJson(value, urlMapping);
+    } else {
+      result[key] = value;
+    }
+  }
+
+  return result;
 }
 
 /**
