@@ -1,0 +1,24 @@
+[
+  {
+    "success": true,
+    "service": "ElevenLabs Scribe V1",
+    "word_level_timestamps": true,
+    "word_count": 325,
+    "speaker_diarization": false,
+    "speaker_count": 0,
+    "speakers": [],
+    "processing_time": 3.3696277141571045,
+    "text_length": 648,
+    "language": "eng"
+  },
+  {
+    "success": false,
+    "service": "AssemblyAI Universal-1",
+    "error": "Invalid API key\n"
+  },
+  {
+    "success": false,
+    "service": "Groq Whisper Large v3",
+    "error": "Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}"
+  }
+]

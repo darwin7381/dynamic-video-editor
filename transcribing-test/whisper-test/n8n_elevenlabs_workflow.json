@@ -1,0 +1,72 @@
+{
+  "name": "ElevenLabs 詞彙級 SRT 生成器",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/speech-to-text",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model_id",
+              "value": "scribe_v1"
+            }
+          ]
+        },
+        "sendBinaryData": true,
+        "binaryPropertyName": "data",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "name": "ElevenLabs Transcribe",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        700,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "elevenlabs_api",
+          "name": "ElevenLabs API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ========================================\n// ElevenLabs 詞彙級 SRT 生成器\n// 作者: AI Team\n// 日期: 2025-10-19\n// ========================================\n\n// 從 ElevenLabs 結果中提取 words\nconst elevenLabsResult = $input.item.json;\nconst words = elevenLabsResult.words || [];\n\n// ========================================\n// 可調整參數\n// ========================================\nconst MAX_CHARS = 18;      // 每段最多字符數\nconst MAX_DURATION = 5.0;  // 每段最長時間（秒）\nconst INCLUDE_SPEAKERS = true;  // 是否包含說話者標識\n\n// ========================================\n// 格式化函數\n// ========================================\n\nfunction formatSRTTime(seconds) {\n  const hours = Math.floor(seconds / 3600);\n  const minutes = Math.floor((seconds % 3600) / 60);\n  const secs = Math.floor(seconds % 60);\n  const milliseconds = Math.floor((seconds % 1) * 1000);\n  \n  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${milliseconds.toString().padStart(3, '0')}`;\n}\n\nfunction formatSRTSegment(index, startSec, endSec, text) {\n  const startTime = formatSRTTime(startSec);\n  const endTime = formatSRTTime(endSec);\n  return `${index}\\n${startTime} --> ${endTime}\\n${text}\\n\\n`;\n}\n\n// ========================================\n// SRT 生成函數\n// ========================================\n\nfunction generateSRT(words, maxChars, maxDuration) {\n  let srtContent = \"\";\n  let segmentIndex = 1;\n  let currentSegment = [];\n  let currentText = \"\";\n  let segmentStart = null;\n  let currentSpeaker = null;\n  \n  for (const word of words) {\n    // 只處理 word 類型\n    if (word.type !== 'word') {\n      continue;\n    }\n    \n    const wordText = word.text;\n    const wordStart = word.start;\n    const wordEnd = word.end;\n    const speaker = word.speaker_id || null;\n    \n    if (segmentStart === null) {\n      segmentStart = wordStart;\n    }\n    \n    if (currentSpeaker === null) {\n      currentSpeaker = speaker;\n    }\n    \n    // 檢查是否需要開始新段落\n    const potentialText = currentText + wordText;\n    const currentDuration = currentSegment.length > 0 ? wordEnd - segmentStart : 0;\n    \n    // 說話者改變或超過字數/時間限制\n    const shouldBreak = (\n      (INCLUDE_SPEAKERS && speaker && speaker !== currentSpeaker) ||\n      (potentialText.length > maxChars && currentSegment.length > 0) ||\n      (currentDuration > maxDuration && currentSegment.length > 0)\n    );\n    \n    if (shouldBreak) {\n      // 生成當前段落\n      const segmentEnd = currentSegment[currentSegment.length - 1].end;\n      let finalText = currentText;\n      \n      // 添加說話者標識\n      if (INCLUDE_SPEAKERS && currentSpeaker) {\n        finalText = `[${currentSpeaker}] ${currentText}`;\n      }\n      \n      srtContent += formatSRTSegment(segmentIndex, segmentStart, segmentEnd, finalText);\n      \n      // 開始新段落\n      segmentIndex++;\n      currentSegment = [word];\n      currentText = wordText;\n      segmentStart = wordStart;\n      currentSpeaker = speaker;\n    } else {\n      currentSegment.push(word);\n      currentText = potentialText;\n    }\n  }\n  \n  // 處理最後一個段落\n  if (currentSegment.length > 0) {\n    const segmentEnd = currentSegment[currentSegment.length - 1].end;\n    let finalText = currentText;\n    \n    if (INCLUDE_SPEAKERS && currentSpeaker) {\n      finalText = `[${currentSpeaker}] ${currentText}`;\n    }\n    \n    srtContent += formatSRTSegment(segmentIndex, segmentStart, segmentEnd, finalText);\n  }\n  \n  return srtContent;\n}\n\n// ========================================\n// 主要執行\n// ========================================\n\nconst srtContent = generateSRT(words, MAX_CHARS, MAX_DURATION);\n\n// 統計資訊\nconst wordCount = words.filter(w => w.type === 'word').length;\nconst speakers = [...new Set(words.filter(w => w.speaker_id).map(w => w.speaker_id))];\nconst segments = srtContent.split('\\n\\n').filter(s => s.trim()).length;\n\n// ========================================\n// 輸出結果\n// ========================================\n\nreturn {\n  json: {\n    srt: srtContent,\n    transcription: elevenLabsResult.text,\n    language: elevenLabsResult.language_code,\n    language_probability: elevenLabsResult.language_probability,\n    word_count: wordCount,\n    total_words: words.length,\n    segment_count: segments,\n    speakers_detected: speakers.length,\n    speakers: speakers,\n    settings: {\n      max_chars: MAX_CHARS,\n      max_duration: MAX_DURATION,\n      include_speakers: INCLUDE_SPEAKERS\n    }\n  }\n};"
+      },
+      "name": "Generate Custom SRT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "ElevenLabs Transcribe": {
+      "main": [
+        [
+          {
+            "node": "Generate Custom SRT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
+
+
+

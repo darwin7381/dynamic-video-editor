@@ -1,0 +1,1812 @@
+{
+  "id": "6b84543a-2f74-4b86-a21b-678acf20fb27",
+  "language_model": "assemblyai_default",
+  "acoustic_model": "assemblyai_default",
+  "language_code": "zh",
+  "speech_understanding": null,
+  "translated_texts": null,
+  "status": "completed",
+  "audio_url": "https://cdn.assemblyai.com/upload/7c782cbb-f78e-46bb-8a9b-ae47832898c4",
+  "text": "分屍後有.出面道歉.但卻表示自己對高層的行為不知情,可是很快跟艾倫合作過的製作人就出.來打臉了。我們在製作會議上,她會看著艾倫打臉。艾倫會看著艾倫,她會笑,因為我希望她會說,艾倫,你不能這樣罵製作人,你不能這樣罵人。她笑了,然後她說,除此以外艾倫還被爆在疫情期間捨棄合作多年的製作團隊把節目的錄製外判給其他公司製作團隊等了一個月都沒收到工作通知和薪水打電話才知道自己被迫放棄.",
+  "words": [
+    {
+      "text": "分屍後有.",
+      "start": 28,
+      "end": 748,
+      "confidence": 0.815,
+      "speaker": "A"
+    },
+    {
+      "text": "出面",
+      "start": 748,
+      "end": 1128,
+      "confidence": 0.9965,
+      "speaker": "B"
+    },
+    {
+      "text": "道歉.",
+      "start": 1128,
+      "end": 2009,
+      "confidence": 0.7362,
+      "speaker": "B"
+    },
+    {
+      "text": "但",
+      "start": 2009,
+      "end": 2169,
+      "confidence": 0.936,
+      "speaker": "A"
+    },
+    {
+      "text": "卻",
+      "start": 2169,
+      "end": 2309,
+      "confidence": 0.5,
+      "speaker": "A"
+    },
+    {
+      "text": "表示",
+      "start": 2309,
+      "end": 2749,
+      "confidence": 0.999,
+      "speaker": "A"
+    },
+    {
+      "text": "自己",
+      "start": 2749,
+      "end": 3249,
+      "confidence": 0.9645,
+      "speaker": "A"
+    },
+    {
+      "text": "對",
+      "start": 3249,
+      "end": 3429,
+      "confidence": 0.5,
+      "speaker": "A"
+    },
+    {
+      "text": "高層",
+      "start": 3429,
+      "end": 3669,
+      "confidence": 0.7205,
+      "speaker": "A"
+    },
+    {
+      "text": "的",
+      "start": 3669,
+      "end": 3730,
+      "confidence": 0.987,
+      "speaker": "A"
+    },
+    {
+      "text": "行為",
+      "start": 3730,
+      "end": 4340,
+      "confidence": 0.71,
+      "speaker": "A"
+    },
+    {
+      "text": "不知情,",
+      "start": 4340,
+      "end": 5270,
+      "confidence": 0.733,
+      "speaker": "A"
+    },
+    {
+      "text": "可是",
+      "start": 5270,
+      "end": 5450,
+      "confidence": 0.9645,
+      "speaker": "A"
+    },
+    {
+      "text": "很快",
+      "start": 5450,
+      "end": 6151,
+      "confidence": 0.9995,
+      "speaker": "A"
+    },
+    {
+      "text": "跟",
+      "start": 6151,
+      "end": 6311,
+      "confidence": 0.883,
+      "speaker": "A"
+    },
+    {
+      "text": "艾倫",
+      "start": 6311,
+      "end": 6901,
+      "confidence": 0.7065,
+      "speaker": "A"
+    },
+    {
+      "text": "合作",
+      "start": 6901,
+      "end": 7351,
+      "confidence": 0.929,
+      "speaker": "A"
+    },
+    {
+      "text": "過",
+      "start": 7351,
+      "end": 7501,
+      "confidence": 0.5,
+      "speaker": "A"
+    },
+    {
+      "text": "的",
+      "start": 7501,
+      "end": 7651,
+      "confidence": 0.926,
+      "speaker": "A"
+    },
+    {
+      "text": "製",
+      "start": 7651,
+      "end": 7731,
+      "confidence": 0.5,
+      "speaker": "A"
+    },
+    {
+      "text": "作",
+      "start": 7731,
+      "end": 7811,
+      "confidence": 0.759,
+      "speaker": "A"
+    },
+    {
+      "text": "人",
+      "start": 7811,
+      "end": 8090,
+      "confidence": 0.998,
+      "speaker": "A"
+    },
+    {
+      "text": "就",
+      "start": 8090,
+      "end": 8311,
+      "confidence": 1.0,
+      "speaker": "A"
+    },
+    {
+      "text": "出.",
+      "start": 8311,
+      "end": 8712,
+      "confidence": 0.907,
+      "speaker": "A"
+    },
+    {
+      "text": "來",
+      "start": 8712,
+      "end": 8892,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "打",
+      "start": 8892,
+      "end": 9072,
+      "confidence": 0.939,
+      "speaker": "B"
+    },
+    {
+      "text": "臉",
+      "start": 9072,
+      "end": 9352,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "了。",
+      "start": 9352,
+      "end": 9692,
+      "confidence": 0.7195,
+      "speaker": "B"
+    },
+    {
+      "text": "我們",
+      "start": 9692,
+      "end": 9772,
+      "confidence": 0.6525,
+      "speaker": "B"
+    },
+    {
+      "text": "在",
+      "start": 9772,
+      "end": 9792,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "製",
+      "start": 9792,
+      "end": 9812,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "作",
+      "start": 9812,
+      "end": 9832,
+      "confidence": 0.499,
+      "speaker": "B"
+    },
+    {
+      "text": "會",
+      "start": 9832,
+      "end": 9837,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "議",
+      "start": 9837,
+      "end": 9904,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "上,",
+      "start": 9904,
+      "end": 10022,
+      "confidence": 0.678,
+      "speaker": "B"
+    },
+    {
+      "text": "她",
+      "start": 10022,
+      "end": 10072,
+      "confidence": 0.8,
+      "speaker": "B"
+    },
+    {
+      "text": "會",
+      "start": 10072,
+      "end": 10152,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "看",
+      "start": 10152,
+      "end": 10232,
+      "confidence": 0.874,
+      "speaker": "B"
+    },
+    {
+      "text": "著",
+      "start": 10232,
+      "end": 10372,
+      "confidence": 0.855,
+      "speaker": "B"
+    },
+    {
+      "text": "艾倫",
+      "start": 10372,
+      "end": 10672,
+      "confidence": 0.6775,
+      "speaker": "B"
+    },
+    {
+      "text": "打臉。",
+      "start": 10672,
+      "end": 10905,
+      "confidence": 0.6088,
+      "speaker": "B"
+    },
+    {
+      "text": "艾倫會",
+      "start": 10905,
+      "end": 11045,
+      "confidence": 0.61866665,
+      "speaker": "B"
+    },
+    {
+      "text": "看著",
+      "start": 11045,
+      "end": 11873,
+      "confidence": 0.9035,
+      "speaker": "B"
+    },
+    {
+      "text": "艾倫,",
+      "start": 11873,
+      "end": 12295,
+      "confidence": 0.5995,
+      "speaker": "B"
+    },
+    {
+      "text": "她",
+      "start": 12295,
+      "end": 12513,
+      "confidence": 0.933,
+      "speaker": "B"
+    },
+    {
+      "text": "會",
+      "start": 12513,
+      "end": 12603,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "笑,",
+      "start": 12603,
+      "end": 12733,
+      "confidence": 0.6905,
+      "speaker": "B"
+    },
+    {
+      "text": "因為",
+      "start": 12733,
+      "end": 12853,
+      "confidence": 0.625,
+      "speaker": "B"
+    },
+    {
+      "text": "我",
+      "start": 12853,
+      "end": 12933,
+      "confidence": 0.874,
+      "speaker": "B"
+    },
+    {
+      "text": "希望",
+      "start": 12933,
+      "end": 13193,
+      "confidence": 0.814,
+      "speaker": "B"
+    },
+    {
+      "text": "她",
+      "start": 13193,
+      "end": 13314,
+      "confidence": 0.831,
+      "speaker": "B"
+    },
+    {
+      "text": "會",
+      "start": 13314,
+      "end": 13319,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "說,",
+      "start": 13319,
+      "end": 13397,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "艾倫,",
+      "start": 13397,
+      "end": 13566,
+      "confidence": 0.5938,
+      "speaker": "B"
+    },
+    {
+      "text": "你",
+      "start": 13566,
+      "end": 13654,
+      "confidence": 0.877,
+      "speaker": "B"
+    },
+    {
+      "text": "不能",
+      "start": 13654,
+      "end": 13774,
+      "confidence": 0.652,
+      "speaker": "B"
+    },
+    {
+      "text": "這樣",
+      "start": 13774,
+      "end": 13781,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "罵",
+      "start": 13781,
+      "end": 13782,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "製",
+      "start": 13782,
+      "end": 13828,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "作",
+      "start": 13828,
+      "end": 13874,
+      "confidence": 0.8,
+      "speaker": "B"
+    },
+    {
+      "text": "人,",
+      "start": 13874,
+      "end": 13924,
+      "confidence": 0.25,
+      "speaker": "B"
+    },
+    {
+      "text": "你",
+      "start": 13924,
+      "end": 13954,
+      "confidence": 0.662,
+      "speaker": "B"
+    },
+    {
+      "text": "不能",
+      "start": 13954,
+      "end": 14154,
+      "confidence": 0.772,
+      "speaker": "B"
+    },
+    {
+      "text": "這樣",
+      "start": 14154,
+      "end": 14161,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "罵",
+      "start": 14161,
+      "end": 14287,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "人。",
+      "start": 14287,
+      "end": 14594,
+      "confidence": 0.71,
+      "speaker": "B"
+    },
+    {
+      "text": "她",
+      "start": 14594,
+      "end": 14774,
+      "confidence": 0.937,
+      "speaker": "B"
+    },
+    {
+      "text": "笑",
+      "start": 14774,
+      "end": 15014,
+      "confidence": 0.882,
+      "speaker": "B"
+    },
+    {
+      "text": "了,",
+      "start": 15014,
+      "end": 15394,
+      "confidence": 0.6875,
+      "speaker": "B"
+    },
+    {
+      "text": "然",
+      "start": 15394,
+      "end": 15614,
+      "confidence": 0.954,
+      "speaker": "B"
+    },
+    {
+      "text": "後",
+      "start": 15614,
+      "end": 15715,
+      "confidence": 0.8,
+      "speaker": "B"
+    },
+    {
+      "text": "她",
+      "start": 15715,
+      "end": 15735,
+      "confidence": 0.001,
+      "speaker": "B"
+    },
+    {
+      "text": "說,",
+      "start": 15745,
+      "end": 22886,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "除此以外",
+      "start": 24038,
+      "end": 24238,
+      "confidence": 0.3665,
+      "speaker": "B"
+    },
+    {
+      "text": "艾倫還",
+      "start": 24238,
+      "end": 24380,
+      "confidence": 0.5196667,
+      "speaker": "B"
+    },
+    {
+      "text": "被",
+      "start": 24380,
+      "end": 24458,
+      "confidence": 0.73,
+      "speaker": "B"
+    },
+    {
+      "text": "爆",
+      "start": 24458,
+      "end": 24578,
+      "confidence": 0.662,
+      "speaker": "B"
+    },
+    {
+      "text": "在",
+      "start": 24578,
+      "end": 24598,
+      "confidence": 0.001,
+      "speaker": "B"
+    },
+    {
+      "text": "疫情",
+      "start": 24598,
+      "end": 25019,
+      "confidence": 0.8485,
+      "speaker": "B"
+    },
+    {
+      "text": "期間",
+      "start": 25019,
+      "end": 25424,
+      "confidence": 0.6675,
+      "speaker": "B"
+    },
+    {
+      "text": "捨",
+      "start": 25424,
+      "end": 25426,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "棄",
+      "start": 25426,
+      "end": 25522,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "合作",
+      "start": 25522,
+      "end": 25639,
+      "confidence": 0.425,
+      "speaker": "B"
+    },
+    {
+      "text": "多年",
+      "start": 25639,
+      "end": 26499,
+      "confidence": 0.879,
+      "speaker": "B"
+    },
+    {
+      "text": "的",
+      "start": 26499,
+      "end": 26519,
+      "confidence": 0.0,
+      "speaker": "B"
+    },
+    {
+      "text": "製",
+      "start": 26519,
+      "end": 26699,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "作",
+      "start": 26699,
+      "end": 26880,
+      "confidence": 0.896,
+      "speaker": "B"
+    },
+    {
+      "text": "團",
+      "start": 26880,
+      "end": 26885,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "隊",
+      "start": 26885,
+      "end": 26952,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "把",
+      "start": 26952,
+      "end": 27020,
+      "confidence": 0.728,
+      "speaker": "B"
+    },
+    {
+      "text": "節",
+      "start": 27020,
+      "end": 27110,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "目的",
+      "start": 27110,
+      "end": 27420,
+      "confidence": 0.7255,
+      "speaker": "B"
+    },
+    {
+      "text": "錄",
+      "start": 27420,
+      "end": 27425,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "製",
+      "start": 27425,
+      "end": 27582,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "外",
+      "start": 27582,
+      "end": 27740,
+      "confidence": 0.65,
+      "speaker": "B"
+    },
+    {
+      "text": "判",
+      "start": 27740,
+      "end": 27940,
+      "confidence": 0.786,
+      "speaker": "B"
+    },
+    {
+      "text": "給",
+      "start": 27940,
+      "end": 27950,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "其他",
+      "start": 27950,
+      "end": 28441,
+      "confidence": 0.4025,
+      "speaker": "B"
+    },
+    {
+      "text": "公司",
+      "start": 28441,
+      "end": 28661,
+      "confidence": 0.343,
+      "speaker": "B"
+    },
+    {
+      "text": "製",
+      "start": 28661,
+      "end": 28771,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "作",
+      "start": 28771,
+      "end": 28881,
+      "confidence": 0.761,
+      "speaker": "B"
+    },
+    {
+      "text": "團",
+      "start": 28881,
+      "end": 28886,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "隊",
+      "start": 28886,
+      "end": 28963,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "等",
+      "start": 28963,
+      "end": 29041,
+      "confidence": 0.802,
+      "speaker": "B"
+    },
+    {
+      "text": "了",
+      "start": 29041,
+      "end": 29141,
+      "confidence": 0.558,
+      "speaker": "B"
+    },
+    {
+      "text": "一",
+      "start": 29141,
+      "end": 29161,
+      "confidence": 0.0,
+      "speaker": "B"
+    },
+    {
+      "text": "個",
+      "start": 29161,
+      "end": 29251,
+      "confidence": 0.5,
+      "speaker": "B"
+    },
+    {
+      "text": "月",
+      "start": 29251,
+      "end": 29341,
+      "confidence": 0.755,
+      "speaker": "B"
+    },
+    {
+      "text": "都",
+      "start": 29341,
+      "end": 29361,
+      "confidence": 0.0,
+      "speaker": "B"
+    },
+    {
+      "text": "沒",
+      "start": 29361,
+      "end": 29821,
+      "confidence": 0.832,
+      "speaker": "B"
+    },
+    {
+      "text": "收到",
+      "start": 29821,
+      "end": 29961,
+      "confidence": 0.3055,
+      "speaker": "B"
+    },
+    {
+      "text": "工作",
+      "start": 29961,
+      "end": 30121,
+      "confidence": 0.3035,
+      "speaker": "B"
+    },
+    {
+      "text": "通知",
+      "start": 30121,
+      "end": 30202,
+      "confidence": 0.333,
+      "speaker": "B"
+    },
+    {
+      "text": "和",
+      "start": 30202,
+      "end": 30302,
+      "confidence": 0.677,
+      "speaker": "B"
+    },
+    {
+      "text": "薪水",
+      "start": 30302,
+      "end": 30462,
+      "confidence": 0.374,
+      "speaker": "B"
+    },
+    {
+      "text": "打電話",
+      "start": 30462,
+      "end": 30614,
+      "confidence": 0.5826667,
+      "speaker": "B"
+    },
+    {
+      "text": "才",
+      "start": 30614,
+      "end": 30662,
+      "confidence": 0.792,
+      "speaker": "B"
+    },
+    {
+      "text": "知道",
+      "start": 30662,
+      "end": 30822,
+      "confidence": 0.352,
+      "speaker": "B"
+    },
+    {
+      "text": "自己",
+      "start": 30822,
+      "end": 31062,
+      "confidence": 0.775,
+      "speaker": "B"
+    },
+    {
+      "text": "被迫",
+      "start": 31062,
+      "end": 31442,
+      "confidence": 0.821,
+      "speaker": "B"
+    },
+    {
+      "text": "放棄.",
+      "start": 31442,
+      "end": 31762,
+      "confidence": 0.25,
+      "speaker": "B"
+    }
+  ],
+  "utterances": [
+    {
+      "speaker": "A",
+      "text": "分屍後有.",
+      "confidence": 0.815,
+      "start": 28,
+      "end": 748,
+      "words": [
+        {
+          "text": "分屍後有.",
+          "start": 28,
+          "end": 748,
+          "confidence": 0.815,
+          "speaker": "A"
+        }
+      ]
+    },
+    {
+      "speaker": "B",
+      "text": "出面 道歉.",
+      "confidence": 0.86635,
+      "start": 748,
+      "end": 2009,
+      "words": [
+        {
+          "text": "出面",
+          "start": 748,
+          "end": 1128,
+          "confidence": 0.9965,
+          "speaker": "B"
+        },
+        {
+          "text": "道歉.",
+          "start": 1128,
+          "end": 2009,
+          "confidence": 0.7362,
+          "speaker": "B"
+        }
+      ]
+    },
+    {
+      "speaker": "A",
+      "text": "但 卻 表示 自己 對 高層 的 行為 不知情, 可是 很快 跟 艾倫 合作 過 的 製 作 人 就 出.",
+      "confidence": 0.81535715,
+      "start": 2009,
+      "end": 8712,
+      "words": [
+        {
+          "text": "但",
+          "start": 2009,
+          "end": 2169,
+          "confidence": 0.936,
+          "speaker": "A"
+        },
+        {
+          "text": "卻",
+          "start": 2169,
+          "end": 2309,
+          "confidence": 0.5,
+          "speaker": "A"
+        },
+        {
+          "text": "表示",
+          "start": 2309,
+          "end": 2749,
+          "confidence": 0.999,
+          "speaker": "A"
+        },
+        {
+          "text": "自己",
+          "start": 2749,
+          "end": 3249,
+          "confidence": 0.9645,
+          "speaker": "A"
+        },
+        {
+          "text": "對",
+          "start": 3249,
+          "end": 3429,
+          "confidence": 0.5,
+          "speaker": "A"
+        },
+        {
+          "text": "高層",
+          "start": 3429,
+          "end": 3669,
+          "confidence": 0.7205,
+          "speaker": "A"
+        },
+        {
+          "text": "的",
+          "start": 3669,
+          "end": 3730,
+          "confidence": 0.987,
+          "speaker": "A"
+        },
+        {
+          "text": "行為",
+          "start": 3730,
+          "end": 4340,
+          "confidence": 0.71,
+          "speaker": "A"
+        },
+        {
+          "text": "不知情,",
+          "start": 4340,
+          "end": 5270,
+          "confidence": 0.733,
+          "speaker": "A"
+        },
+        {
+          "text": "可是",
+          "start": 5270,
+          "end": 5450,
+          "confidence": 0.9645,
+          "speaker": "A"
+        },
+        {
+          "text": "很快",
+          "start": 5450,
+          "end": 6151,
+          "confidence": 0.9995,
+          "speaker": "A"
+        },
+        {
+          "text": "跟",
+          "start": 6151,
+          "end": 6311,
+          "confidence": 0.883,
+          "speaker": "A"
+        },
+        {
+          "text": "艾倫",
+          "start": 6311,
+          "end": 6901,
+          "confidence": 0.7065,
+          "speaker": "A"
+        },
+        {
+          "text": "合作",
+          "start": 6901,
+          "end": 7351,
+          "confidence": 0.929,
+          "speaker": "A"
+        },
+        {
+          "text": "過",
+          "start": 7351,
+          "end": 7501,
+          "confidence": 0.5,
+          "speaker": "A"
+        },
+        {
+          "text": "的",
+          "start": 7501,
+          "end": 7651,
+          "confidence": 0.926,
+          "speaker": "A"
+        },
+        {
+          "text": "製",
+          "start": 7651,
+          "end": 7731,
+          "confidence": 0.5,
+          "speaker": "A"
+        },
+        {
+          "text": "作",
+          "start": 7731,
+          "end": 7811,
+          "confidence": 0.759,
+          "speaker": "A"
+        },
+        {
+          "text": "人",
+          "start": 7811,
+          "end": 8090,
+          "confidence": 0.998,
+          "speaker": "A"
+        },
+        {
+          "text": "就",
+          "start": 8090,
+          "end": 8311,
+          "confidence": 1.0,
+          "speaker": "A"
+        },
+        {
+          "text": "出.",
+          "start": 8311,
+          "end": 8712,
+          "confidence": 0.907,
+          "speaker": "A"
+        }
+      ]
+    },
+    {
+      "speaker": "B",
+      "text": "來 打 臉 了。 我們 在 製 作 會 議 上, 她 會 看 著 艾倫 打臉。 艾倫會 看著 艾倫, 她 會 笑, 因為 我 希望 她 會 說, 艾倫, 你 不能 這樣 罵 製 作 人, 你 不能 這樣 罵 人。 她 笑 了, 然 後 她 說, 除此以外 艾倫還 被 爆 在 疫情 期間 捨 棄 合作 多年 的 製 作 團 隊 把 節 目的 錄 製 外 判 給 其他 公司 製 作 團 隊 等 了 一 個 月 都 沒 收到 工作 通知 和 薪水 打電話 才 知道 自己 被迫 放棄.",
+      "confidence": 0.58942884,
+      "start": 8712,
+      "end": 31762,
+      "words": [
+        {
+          "text": "來",
+          "start": 8712,
+          "end": 8892,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "打",
+          "start": 8892,
+          "end": 9072,
+          "confidence": 0.939,
+          "speaker": "B"
+        },
+        {
+          "text": "臉",
+          "start": 9072,
+          "end": 9352,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "了。",
+          "start": 9352,
+          "end": 9692,
+          "confidence": 0.7195,
+          "speaker": "B"
+        },
+        {
+          "text": "我們",
+          "start": 9692,
+          "end": 9772,
+          "confidence": 0.6525,
+          "speaker": "B"
+        },
+        {
+          "text": "在",
+          "start": 9772,
+          "end": 9792,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "製",
+          "start": 9792,
+          "end": 9812,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "作",
+          "start": 9812,
+          "end": 9832,
+          "confidence": 0.499,
+          "speaker": "B"
+        },
+        {
+          "text": "會",
+          "start": 9832,
+          "end": 9837,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "議",
+          "start": 9837,
+          "end": 9904,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "上,",
+          "start": 9904,
+          "end": 10022,
+          "confidence": 0.678,
+          "speaker": "B"
+        },
+        {
+          "text": "她",
+          "start": 10022,
+          "end": 10072,
+          "confidence": 0.8,
+          "speaker": "B"
+        },
+        {
+          "text": "會",
+          "start": 10072,
+          "end": 10152,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "看",
+          "start": 10152,
+          "end": 10232,
+          "confidence": 0.874,
+          "speaker": "B"
+        },
+        {
+          "text": "著",
+          "start": 10232,
+          "end": 10372,
+          "confidence": 0.855,
+          "speaker": "B"
+        },
+        {
+          "text": "艾倫",
+          "start": 10372,
+          "end": 10672,
+          "confidence": 0.6775,
+          "speaker": "B"
+        },
+        {
+          "text": "打臉。",
+          "start": 10672,
+          "end": 10905,
+          "confidence": 0.6088,
+          "speaker": "B"
+        },
+        {
+          "text": "艾倫會",
+          "start": 10905,
+          "end": 11045,
+          "confidence": 0.61866665,
+          "speaker": "B"
+        },
+        {
+          "text": "看著",
+          "start": 11045,
+          "end": 11873,
+          "confidence": 0.9035,
+          "speaker": "B"
+        },
+        {
+          "text": "艾倫,",
+          "start": 11873,
+          "end": 12295,
+          "confidence": 0.5995,
+          "speaker": "B"
+        },
+        {
+          "text": "她",
+          "start": 12295,
+          "end": 12513,
+          "confidence": 0.933,
+          "speaker": "B"
+        },
+        {
+          "text": "會",
+          "start": 12513,
+          "end": 12603,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "笑,",
+          "start": 12603,
+          "end": 12733,
+          "confidence": 0.6905,
+          "speaker": "B"
+        },
+        {
+          "text": "因為",
+          "start": 12733,
+          "end": 12853,
+          "confidence": 0.625,
+          "speaker": "B"
+        },
+        {
+          "text": "我",
+          "start": 12853,
+          "end": 12933,
+          "confidence": 0.874,
+          "speaker": "B"
+        },
+        {
+          "text": "希望",
+          "start": 12933,
+          "end": 13193,
+          "confidence": 0.814,
+          "speaker": "B"
+        },
+        {
+          "text": "她",
+          "start": 13193,
+          "end": 13314,
+          "confidence": 0.831,
+          "speaker": "B"
+        },
+        {
+          "text": "會",
+          "start": 13314,
+          "end": 13319,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "說,",
+          "start": 13319,
+          "end": 13397,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "艾倫,",
+          "start": 13397,
+          "end": 13566,
+          "confidence": 0.5938,
+          "speaker": "B"
+        },
+        {
+          "text": "你",
+          "start": 13566,
+          "end": 13654,
+          "confidence": 0.877,
+          "speaker": "B"
+        },
+        {
+          "text": "不能",
+          "start": 13654,
+          "end": 13774,
+          "confidence": 0.652,
+          "speaker": "B"
+        },
+        {
+          "text": "這樣",
+          "start": 13774,
+          "end": 13781,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "罵",
+          "start": 13781,
+          "end": 13782,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "製",
+          "start": 13782,
+          "end": 13828,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "作",
+          "start": 13828,
+          "end": 13874,
+          "confidence": 0.8,
+          "speaker": "B"
+        },
+        {
+          "text": "人,",
+          "start": 13874,
+          "end": 13924,
+          "confidence": 0.25,
+          "speaker": "B"
+        },
+        {
+          "text": "你",
+          "start": 13924,
+          "end": 13954,
+          "confidence": 0.662,
+          "speaker": "B"
+        },
+        {
+          "text": "不能",
+          "start": 13954,
+          "end": 14154,
+          "confidence": 0.772,
+          "speaker": "B"
+        },
+        {
+          "text": "這樣",
+          "start": 14154,
+          "end": 14161,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "罵",
+          "start": 14161,
+          "end": 14287,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "人。",
+          "start": 14287,
+          "end": 14594,
+          "confidence": 0.71,
+          "speaker": "B"
+        },
+        {
+          "text": "她",
+          "start": 14594,
+          "end": 14774,
+          "confidence": 0.937,
+          "speaker": "B"
+        },
+        {
+          "text": "笑",
+          "start": 14774,
+          "end": 15014,
+          "confidence": 0.882,
+          "speaker": "B"
+        },
+        {
+          "text": "了,",
+          "start": 15014,
+          "end": 15394,
+          "confidence": 0.6875,
+          "speaker": "B"
+        },
+        {
+          "text": "然",
+          "start": 15394,
+          "end": 15614,
+          "confidence": 0.954,
+          "speaker": "B"
+        },
+        {
+          "text": "後",
+          "start": 15614,
+          "end": 15715,
+          "confidence": 0.8,
+          "speaker": "B"
+        },
+        {
+          "text": "她",
+          "start": 15715,
+          "end": 15735,
+          "confidence": 0.001,
+          "speaker": "B"
+        },
+        {
+          "text": "說,",
+          "start": 15745,
+          "end": 22886,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "除此以外",
+          "start": 24038,
+          "end": 24238,
+          "confidence": 0.3665,
+          "speaker": "B"
+        },
+        {
+          "text": "艾倫還",
+          "start": 24238,
+          "end": 24380,
+          "confidence": 0.5196667,
+          "speaker": "B"
+        },
+        {
+          "text": "被",
+          "start": 24380,
+          "end": 24458,
+          "confidence": 0.73,
+          "speaker": "B"
+        },
+        {
+          "text": "爆",
+          "start": 24458,
+          "end": 24578,
+          "confidence": 0.662,
+          "speaker": "B"
+        },
+        {
+          "text": "在",
+          "start": 24578,
+          "end": 24598,
+          "confidence": 0.001,
+          "speaker": "B"
+        },
+        {
+          "text": "疫情",
+          "start": 24598,
+          "end": 25019,
+          "confidence": 0.8485,
+          "speaker": "B"
+        },
+        {
+          "text": "期間",
+          "start": 25019,
+          "end": 25424,
+          "confidence": 0.6675,
+          "speaker": "B"
+        },
+        {
+          "text": "捨",
+          "start": 25424,
+          "end": 25426,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "棄",
+          "start": 25426,
+          "end": 25522,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "合作",
+          "start": 25522,
+          "end": 25639,
+          "confidence": 0.425,
+          "speaker": "B"
+        },
+        {
+          "text": "多年",
+          "start": 25639,
+          "end": 26499,
+          "confidence": 0.879,
+          "speaker": "B"
+        },
+        {
+          "text": "的",
+          "start": 26499,
+          "end": 26519,
+          "confidence": 0.0,
+          "speaker": "B"
+        },
+        {
+          "text": "製",
+          "start": 26519,
+          "end": 26699,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "作",
+          "start": 26699,
+          "end": 26880,
+          "confidence": 0.896,
+          "speaker": "B"
+        },
+        {
+          "text": "團",
+          "start": 26880,
+          "end": 26885,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "隊",
+          "start": 26885,
+          "end": 26952,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "把",
+          "start": 26952,
+          "end": 27020,
+          "confidence": 0.728,
+          "speaker": "B"
+        },
+        {
+          "text": "節",
+          "start": 27020,
+          "end": 27110,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "目的",
+          "start": 27110,
+          "end": 27420,
+          "confidence": 0.7255,
+          "speaker": "B"
+        },
+        {
+          "text": "錄",
+          "start": 27420,
+          "end": 27425,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "製",
+          "start": 27425,
+          "end": 27582,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "外",
+          "start": 27582,
+          "end": 27740,
+          "confidence": 0.65,
+          "speaker": "B"
+        },
+        {
+          "text": "判",
+          "start": 27740,
+          "end": 27940,
+          "confidence": 0.786,
+          "speaker": "B"
+        },
+        {
+          "text": "給",
+          "start": 27940,
+          "end": 27950,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "其他",
+          "start": 27950,
+          "end": 28441,
+          "confidence": 0.4025,
+          "speaker": "B"
+        },
+        {
+          "text": "公司",
+          "start": 28441,
+          "end": 28661,
+          "confidence": 0.343,
+          "speaker": "B"
+        },
+        {
+          "text": "製",
+          "start": 28661,
+          "end": 28771,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "作",
+          "start": 28771,
+          "end": 28881,
+          "confidence": 0.761,
+          "speaker": "B"
+        },
+        {
+          "text": "團",
+          "start": 28881,
+          "end": 28886,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "隊",
+          "start": 28886,
+          "end": 28963,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "等",
+          "start": 28963,
+          "end": 29041,
+          "confidence": 0.802,
+          "speaker": "B"
+        },
+        {
+          "text": "了",
+          "start": 29041,
+          "end": 29141,
+          "confidence": 0.558,
+          "speaker": "B"
+        },
+        {
+          "text": "一",
+          "start": 29141,
+          "end": 29161,
+          "confidence": 0.0,
+          "speaker": "B"
+        },
+        {
+          "text": "個",
+          "start": 29161,
+          "end": 29251,
+          "confidence": 0.5,
+          "speaker": "B"
+        },
+        {
+          "text": "月",
+          "start": 29251,
+          "end": 29341,
+          "confidence": 0.755,
+          "speaker": "B"
+        },
+        {
+          "text": "都",
+          "start": 29341,
+          "end": 29361,
+          "confidence": 0.0,
+          "speaker": "B"
+        },
+        {
+          "text": "沒",
+          "start": 29361,
+          "end": 29821,
+          "confidence": 0.832,
+          "speaker": "B"
+        },
+        {
+          "text": "收到",
+          "start": 29821,
+          "end": 29961,
+          "confidence": 0.3055,
+          "speaker": "B"
+        },
+        {
+          "text": "工作",
+          "start": 29961,
+          "end": 30121,
+          "confidence": 0.3035,
+          "speaker": "B"
+        },
+        {
+          "text": "通知",
+          "start": 30121,
+          "end": 30202,
+          "confidence": 0.333,
+          "speaker": "B"
+        },
+        {
+          "text": "和",
+          "start": 30202,
+          "end": 30302,
+          "confidence": 0.677,
+          "speaker": "B"
+        },
+        {
+          "text": "薪水",
+          "start": 30302,
+          "end": 30462,
+          "confidence": 0.374,
+          "speaker": "B"
+        },
+        {
+          "text": "打電話",
+          "start": 30462,
+          "end": 30614,
+          "confidence": 0.5826667,
+          "speaker": "B"
+        },
+        {
+          "text": "才",
+          "start": 30614,
+          "end": 30662,
+          "confidence": 0.792,
+          "speaker": "B"
+        },
+        {
+          "text": "知道",
+          "start": 30662,
+          "end": 30822,
+          "confidence": 0.352,
+          "speaker": "B"
+        },
+        {
+          "text": "自己",
+          "start": 30822,
+          "end": 31062,
+          "confidence": 0.775,
+          "speaker": "B"
+        },
+        {
+          "text": "被迫",
+          "start": 31062,
+          "end": 31442,
+          "confidence": 0.821,
+          "speaker": "B"
+        },
+        {
+          "text": "放棄.",
+          "start": 31442,
+          "end": 31762,
+          "confidence": 0.25,
+          "speaker": "B"
+        }
+      ]
+    }
+  ],
+  "confidence": 0.6512271,
+  "audio_duration": 54,
+  "punctuate": true,
+  "format_text": true,
+  "dual_channel": false,
+  "webhook_url": null,
+  "webhook_status_code": null,
+  "webhook_auth": false,
+  "webhook_auth_header_name": null,
+  "speed_boost": false,
+  "auto_highlights_result": null,
+  "auto_highlights": false,
+  "audio_start_from": null,
+  "audio_end_at": null,
+  "word_boost": [],
+  "boost_param": null,
+  "prompt": null,
+  "keyterms_prompt": [],
+  "filter_profanity": false,
+  "redact_pii": false,
+  "redact_pii_audio": false,
+  "redact_pii_audio_quality": null,
+  "redact_pii_audio_options": null,
+  "redact_pii_policies": null,
+  "redact_pii_sub": null,
+  "speaker_labels": true,
+  "speaker_options": null,
+  "content_safety": false,
+  "iab_categories": false,
+  "content_safety_labels": {
+    "status": "unavailable",
+    "results": [],
+    "summary": {}
+  },
+  "iab_categories_result": {
+    "status": "unavailable",
+    "results": [],
+    "summary": {}
+  },
+  "language_detection": false,
+  "language_detection_options": null,
+  "language_detection_results": null,
+  "language_confidence_threshold": null,
+  "language_confidence": null,
+  "custom_spelling": null,
+  "throttled": false,
+  "auto_chapters": false,
+  "summarization": false,
+  "summary_type": null,
+  "summary_model": null,
+  "custom_topics": false,
+  "topics": [],
+  "speech_threshold": null,
+  "speech_model": null,
+  "chapters": null,
+  "disfluencies": false,
+  "entity_detection": false,
+  "sentiment_analysis": false,
+  "sentiment_analysis_results": null,
+  "entities": null,
+  "speakers_expected": null,
+  "summary": null,
+  "custom_topics_results": null,
+  "is_deleted": null,
+  "multichannel": null,
+  "project_id": 1310928,
+  "token_id": 1320762
+}
