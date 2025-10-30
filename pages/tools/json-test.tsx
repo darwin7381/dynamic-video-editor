@@ -284,6 +284,15 @@ const JSONTest: React.FC = () => {
         try {
           setIsLoading(true);
           
+          // 🔧 設定影片快取規則（允許所有外部影片完整快取）
+          console.log('🔧 設定影片快取規則...');
+          try {
+            await preview.setCacheBypassRules([/.*/]);  // 允許所有 URL
+            console.log('✅ 影片快取規則設定完成');
+          } catch (cacheRuleError) {
+            console.warn('⚠️ 快取規則設定失敗:', cacheRuleError);
+          }
+          
           // 檢查是否有template ID環境變數，如果有就先載入template作為基礎
           if (process.env.NEXT_PUBLIC_TEMPLATE_ID) {
             console.log('先載入基礎模板...');

@@ -120,11 +120,24 @@ export async function cacheExternalAssets(
           throw new Error(`代理失敗: HTTP ${proxyResponse.status} - ${errorText}`);
         }
         
-        blob = await proxyResponse.blob();
-        console.log(`[cacheAsset] ✅ 代理下載成功 (${blob.size} bytes)`);
+        // 取得 Blob 並確保有正確的 MIME type
+        const arrayBuffer = await proxyResponse.arrayBuffer();
+        const contentType = proxyResponse.headers.get('content-type') || 'application/octet-stream';
+        blob = new Blob([arrayBuffer], { type: contentType });
+        
+        console.log(`[cacheAsset] ✅ 代理下載成功 (${blob.size} bytes, type: ${blob.type})`);
       }
 
       console.log(`[cacheAsset] 下載完成: ${url} (${blob.size} bytes, ${blob.type})`);
+
+      // 🔧 特殊處理：GIF 檔案
+      // Creatomate Preview 可能不支援 GIF 作為 video 類型
+      // 但我們仍然快取，並記錄警告
+      if (url.toLowerCase().includes('.gif') && blob.type.includes('gif')) {
+        console.warn(`[cacheAsset] ⚠️ 檢測到 GIF 檔案: ${url}`);
+        console.warn(`[cacheAsset] 注意：GIF 在 Preview 中可能無法作為 video 類型播放`);
+        console.warn(`[cacheAsset] 建議：預覽時使用 type="image"，最終渲染時使用 type="video"`);
+      }
 
       // 快取到 Preview SDK
       await preview.cacheAsset(url, blob);
