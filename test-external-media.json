@@ -1,0 +1,71 @@
+{
+  "output_format": "mp4",
+  "width": 1920,
+  "height": 1080,
+  "fill_color": "#262626",
+  "elements": [
+    {
+      "type": "image",
+      "source": "https://files.blocktempo.ai/BlockTempo_Daily_v1.5/news_image.jpeg",
+      "fit": "cover",
+      "time": "0 s",
+      "duration": "5 s"
+    },
+    {
+      "type": "text",
+      "name": "title",
+      "text": "測試 Cloudflare R2 素材載入",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "y": "30%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.8)",
+      "time": "0.5 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "image",
+      "source": "https://picsum.photos/1920/1080",
+      "fit": "cover",
+      "time": "5 s",
+      "duration": "5 s"
+    },
+    {
+      "type": "text",
+      "name": "subtitle",
+      "text": "測試任意外部素材（Picsum）",
+      "font_family": "Noto Sans TC",
+      "font_size": "5 vh",
+      "font_weight": "600",
+      "fill_color": "#FFD700",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "y": "30%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.8)",
+      "time": "5.5 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "name": "result",
+      "text": "如果看到兩張圖片，代理方案成功！",
+      "font_family": "Noto Sans TC",
+      "font_size": "4 vh",
+      "font_weight": "500",
+      "fill_color": "#4CAF50",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "y": "70%",
+      "width": "90%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "10 s",
+      "duration": "3 s"
+    }
+  ]
+}
+

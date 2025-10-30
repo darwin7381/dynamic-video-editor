@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>iframe 代理測試</title>
+  <style>
+    body { margin: 20px; font-family: sans-serif; }
+    .test-section { margin: 20px 0; padding: 20px; border: 2px solid #ccc; }
+    h2 { color: #333; }
+    img, video { max-width: 100%; height: auto; }
+    .result { margin-top: 10px; padding: 10px; background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>🧪 iframe 相對路徑代理測試</h1>
+  
+  <div class="test-section">
+    <h2>測試 1：直接在主頁面載入代理 URL</h2>
+    <img src="/api/media-proxy?url=https%3A%2F%2Ffiles.blocktempo.ai%2FBlockTempo_Daily_v1.5%2Fnews_image.jpeg" alt="代理圖片">
+    <div class="result" id="test1-result">載入中...</div>
+  </div>
+  
+  <div class="test-section">
+    <h2>測試 2：在 iframe 中載入代理 URL</h2>
+    <iframe id="test-iframe" width="800" height="600" style="border: 1px solid #999;"></iframe>
+    <div class="result" id="test2-result">載入中...</div>
+  </div>
+  
+  <div class="test-section">
+    <h2>測試 3：iframe 從不同源載入頁面後請求代理</h2>
+    <p>這個測試模擬 Creatomate iframe 的情況</p>
+    <div class="result" id="test3-result">
+      ❌ 無法測試 - 需要真實的跨域 iframe 環境
+    </div>
+  </div>
+
+  <script>
+    // 測試 1：主頁面圖片載入
+    const img1 = document.querySelector('.test-section:nth-child(2) img');
+    img1.onload = () => {
+      document.getElementById('test1-result').textContent = '✅ 主頁面載入成功';
+      document.getElementById('test1-result').style.background = '#d4edda';
+      document.getElementById('test1-result').style.color = '#155724';
+    };
+    img1.onerror = () => {
+      document.getElementById('test1-result').textContent = '❌ 主頁面載入失敗';
+      document.getElementById('test1-result').style.background = '#f8d7da';
+      document.getElementById('test1-result').style.color = '#721c24';
+    };
+    
+    // 測試 2：iframe 內載入
+    const testIframe = document.getElementById('test-iframe');
+    const iframeHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
+          img { max-width: 100%; max-height: 100%; }
+        </style>
+      </head>
+      <body>
+        <img src="/api/media-proxy?url=https%3A%2F%2Ffiles.blocktempo.ai%2FBlockTempo_Daily_v1.5%2Fnews_image.jpeg" alt="iframe內的代理圖片">
+        <script>
+          const img = document.querySelector('img');
+          img.onload = () => {
+            window.parent.postMessage({ test: 'iframe-img-loaded', success: true }, '*');
+          };
+          img.onerror = (e) => {
+            window.parent.postMessage({ test: 'iframe-img-loaded', success: false, error: e }, '*');
+          };
+        <\/script>
+      </body>
+      </html>
+    `;
+    
+    testIframe.srcdoc = iframeHTML;
+    
+    // 監聽 iframe 的訊息
+    window.addEventListener('message', (e) => {
+      if (e.data.test === 'iframe-img-loaded') {
+        const result = document.getElementById('test2-result');
+        if (e.data.success) {
+          result.textContent = '✅ iframe 內載入成功（同源 iframe）';
+          result.style.background = '#d4edda';
+          result.style.color = '#155724';
+        } else {
+          result.textContent = '❌ iframe 內載入失敗';
+          result.style.background = '#f8d7da';
+          result.style.color = '#721c24';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
+

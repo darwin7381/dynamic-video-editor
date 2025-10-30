@@ -4,6 +4,7 @@ import Link from 'next/link';
 import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
 import { processMediaUrlsInJson } from '../../utility/mediaProxy';
+import { cacheExternalAssets } from '../../utility/cacheAssetHelper';
 import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
 
 const JSONTest: React.FC = () => {
@@ -298,6 +299,12 @@ const JSONTest: React.FC = () => {
           // 然後設置我們的JSON
           const source = JSON.parse(jsonInput);
           console.log('原始JSON source:', source);
+          
+          // 🔧 使用 cacheAsset 預先快取所有外部素材
+          // 這會處理：1) 有 CORS 的素材（直接下載） 2) 沒有 CORS 的素材（透過代理）
+          console.log('🔧 [初始化] 開始快取外部素材...');
+          const cacheResult = await cacheExternalAssets(preview, source);
+          console.log(`✅ [初始化] 快取完成 - 成功: ${cacheResult.success.length}, 失敗: ${cacheResult.failed.length}`);
           
           // 檢查並轉換駝峰命名為蛇形命名（Creatomate Preview SDK 需要）
           const convertToSnakeCase = (obj: any): any => {
@@ -693,6 +700,11 @@ const JSONTest: React.FC = () => {
           setError(null); // 清除之前的錯誤
           const source = JSON.parse(jsonInput);
           
+          // 🔧 使用 cacheAsset 預先快取所有外部素材
+          console.log('🔧 [即時更新] 開始快取外部素材...');
+          const cacheResult = await cacheExternalAssets(previewRef.current!, source);
+          console.log(`✅ [即時更新] 快取完成 - 成功: ${cacheResult.success.length}, 失敗: ${cacheResult.failed.length}`);
+          
           // 先解析時間軸元素，避免狀態不同步
           const elements = parseTimelineElements(source);
           setTimelineElements(elements);
@@ -730,7 +742,7 @@ const JSONTest: React.FC = () => {
       }, 800); // 增加防抖時間以處理長JSON
       return () => clearTimeout(timeoutId);
     }
-  }, [jsonInput, parseTimelineElements]); // 只依賴jsonInput變化
+  }, [jsonInput, parseTimelineElements, previewReady]); // 加入 previewReady 依賴
 
   // 跳轉到特定時間
   const seekToTime = useCallback(async (time: number, elementIndex?: number) => {

@@ -1,0 +1,46 @@
+{
+  "output_format": "mp4",
+  "width": 1920,
+  "height": 1080,
+  "fill_color": "#000000",
+  "duration": "8 s",
+  "elements": [
+    {
+      "type": "image",
+      "source": "https://media.tenor.com/EOhh4Dv9AdUAAAAM/point-at-you-point.gif",
+      "fit": "cover",
+      "time": "0 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "text": "測試 GIF (type=image)",
+      "font_family": "Noto Sans TC",
+      "font_size": "5 vh",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y": "20%",
+      "time": "0.5 s",
+      "duration": "3 s"
+    },
+    {
+      "type": "video",
+      "source": "https://2050today.org/wp-content/uploads/2020/07/Video-Placeholder.mp4?_=6",
+      "fit": "cover",
+      "time": "4 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "text": "測試 Video",
+      "font_family": "Noto Sans TC",
+      "font_size": "5 vh",
+      "fill_color": "#FFD700",
+      "x_alignment": "50%",
+      "y": "20%",
+      "time": "4.5 s",
+      "duration": "3 s"
+    }
+  ]
+}
+
