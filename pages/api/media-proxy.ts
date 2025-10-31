@@ -128,14 +128,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 獲取內容類型
-    let contentType = response.headers.get('content-type') || guessContentType(url);
+    const contentType = response.headers.get('content-type') || guessContentType(url);
     const contentLength = response.headers.get('content-length');
-    
-    // 🔧 特殊處理：GIF 檔案偽裝成 MP4（讓 video 元素能嘗試播放）
-    if (contentType === 'image/gif' || url.toLowerCase().includes('.gif')) {
-      console.log(`[媒體代理] 🎭 偵測到 GIF，Content-Type 偽裝為 video/mp4`);
-      contentType = 'video/mp4';
-    }
 
     // 檢查檔案大小限制（50MB）
     if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) {

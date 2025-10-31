@@ -141,9 +141,7 @@ export async function cacheExternalAssets(
         
         // 取得 Blob 並確保有正確的 MIME type
         const arrayBuffer = await proxyResponse.arrayBuffer();
-        let contentType = proxyResponse.headers.get('content-type') || 'application/octet-stream';
-        
-        // 🔧 如果代理已經偽裝 GIF 為 video/mp4，保持這個 type
+        const contentType = proxyResponse.headers.get('content-type') || 'application/octet-stream';
         blob = new Blob([arrayBuffer], { type: contentType });
         
         console.log(`[cacheAsset] ✅ 代理下載成功 (${blob.size} bytes, type: ${blob.type})`);
