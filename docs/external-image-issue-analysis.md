@@ -243,18 +243,35 @@ await preview.setSource({
 
 ### 已驗證失敗的方案
 
-**❌ 圖片代理方案**（2025-10-30 實測）：
+**❌ 圖片代理方案（相對路徑）**（2025-10-30 實測）：
 - 理論上合理，但無法在跨域 iframe 中運作
 - 相對路徑會被解析到錯誤的域名
 - 這是 Web 標準限制，無法繞過
 
-### 推薦方案
+### ✅ 最終成功方案
 
-**✅ cacheAsset() API**（官方支援，v1.6.0+）：
-- 官方提供的正式解決方案
-- 透過 Blob 直接傳遞資料
-- 不受跨域限制影響
-- 支援所有素材類型
+**方案組合**（2025-11-02 完成）：
+
+1. **圖片**：cacheAsset() API
+   - 所有圖片（任何來源）：✅ 完全支援
+   - 透過 Blob 傳遞，不受 CORS 限制
+
+2. **影片（有 CORS）**：直接載入或 cacheAsset()
+   - Cloudflare R2 素材：✅ 完全支援
+   - 其他有 CORS 的來源：✅ 完全支援
+
+3. **影片（無 CORS）**：cacheAsset() + 絕對代理 URL
+   - 關鍵突破：使用絕對 URL 而非相對路徑
+   - `http://localhost:3000/api/media-proxy?url=...`
+   - iframe 可以正常訪問代理 API
+   - ✅ 完全支援
+
+4. **GIF 動畫**：CloudConvert 轉換
+   - type="image"：顯示定格 ✅
+   - type="video"：轉換為 MP4 → 播放動畫 ✅
+   - 需要 CloudConvert API Key
+
+**參考完整文檔**：`COMPLETE_SOLUTION_SUMMARY.md`
 
 ---
 

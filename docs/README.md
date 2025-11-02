@@ -2,9 +2,11 @@
 
 ## 文檔概覽
 
-本目錄包含所有關於 Creatomate Preview SDK 和 API 的深度技術文檔。
+本目錄包含所有關於 Creatomate Preview SDK 和 API 的深度技術文檔，以及外部素材即時預覽問題的完整解決方案。
 
-**最後更新**：2025年10月29日
+**最後更新**：2025年11月2日  
+**解決方案完成度**：95%  
+**生產就緒**：✅ 是
 
 ---
 
@@ -12,28 +14,42 @@
 
 ### 🔥 最新文檔（推薦閱讀）
 
-1. **[研究驗證總結報告](./research-verification-summary.md)** ⭐ **必讀**
+1. **[完整解決方案總結](./COMPLETE_SOLUTION_SUMMARY.md)** ⭐⭐⭐ **必讀**
+   - 4 天問題解決完整記錄
+   - 所有方案的測試結果
+   - 當前狀態：95% 完成
+   - 包含效能分析和使用指南
+   - 適合：所有開發者
+
+2. **[研究驗證總結報告](./research-verification-summary.md)** ⭐ **技術驗證**
    - 完整驗證另一個 AI 的研究發現
    - 95% 準確度評分
    - 包含詳細的驗證方法論
-   - 適合：想快速了解全貌的開發者
+   - 適合：想了解技術細節的開發者
 
-2. **[Creatomate Preview SDK 深度技術分析](./creatomate-preview-sdk-deep-dive.md)** ⭐ **技術深度**
+3. **[Creatomate Preview SDK 深度技術分析](./creatomate-preview-sdk-deep-dive.md)** ⭐ **架構深度**
    - 完整的技術架構分析
    - 所有主張都有原始碼證據
    - 包含實際程式碼範例
-   - 適合：需要深入理解機制的開發者
+   - 適合：需要深入理解 SDK 的開發者
 
 ### 📖 問題排查與解決方案
 
-3. **[外部圖片載入問題分析](./external-image-issue-analysis.md)**
+4. **[外部圖片載入問題分析](./external-image-issue-analysis.md)**
    - 問題診斷過程
-   - 代理方案實作細節
+   - Media Proxy 失敗分析
+   - 最終解決方案
    - 適合：遇到外部素材載入問題的開發者
+
+5. **[cacheAsset 深度調查](./cacheasset-investigation.md)**
+   - cacheAsset API 實驗報告
+   - Blob 測試與比對
+   - iframe 行為分析
+   - 適合：深入研究 cacheAsset 的開發者
 
 ### 📋 API 參考
 
-4. **[Creatomate API 知識庫](./creatomate-api-knowledge.md)**
+6. **[Creatomate API 知識庫](./creatomate-api-knowledge.md)**
    - API 請求格式
    - 命名規則說明
    - 官方範例學習
@@ -41,40 +57,68 @@
 
 ### 🔄 技術選型
 
-5. **[影片編輯框架評估](./video-editing-frameworks-evaluation.md)**
+7. **[影片編輯框架評估](./video-editing-frameworks-evaluation.md)**
    - Creatomate vs Remotion vs FFmpeg
    - 各框架優缺點比較
    - 適合：考慮替代方案的開發者
+
+### ⚙️ 設定指南
+
+8. **[CloudConvert 設定指南](./convertapi-setup.md)**
+   - GIF 轉 MP4 服務設定
+   - API Key 取得方式
+   - 免費額度：25次/天
+   - 適合：需要 GIF 動畫預覽的開發者
+
+9. **[Cloudflare R2 CORS 設定](./cloudflare-r2-cors-setup.md)**
+   - R2 CORS 政策設定
+   - 常見問題排查
+   - 適合：使用 R2 儲存素材的開發者
 
 ---
 
 ## 📊 文檔關係圖
 
 ```
-研究驗證總結報告 (入口文檔)
+完整解決方案總結 ⭐ (入口文檔)
     │
-    ├─→ Creatomate Preview SDK 深度分析 (技術細節)
+    ├─→ 外部圖片載入問題分析 (問題診斷)
     │       │
-    │       ├─→ 外部圖片載入問題分析 (實際問題)
-    │       │
-    │       └─→ Creatomate API 知識庫 (API 參考)
+    │       └─→ cacheAsset 深度調查 (實驗報告)
     │
-    └─→ 影片編輯框架評估 (技術選型)
+    ├─→ Creatomate Preview SDK 深度分析 (SDK 架構)
+    │       │
+    │       └─→ 研究驗證總結報告 (技術驗證)
+    │
+    ├─→ CloudConvert 設定指南 (GIF 轉換)
+    │
+    ├─→ Cloudflare R2 CORS 設定 (R2 素材)
+    │
+    └─→ 影片編輯框架評估 (替代方案)
 ```
 
 ---
 
 ## 🎓 學習路徑
 
-### 路徑 1：快速上手
+### 路徑 1：快速上手（推薦）
 
-1. 閱讀 [研究驗證總結報告](./research-verification-summary.md) - 10 分鐘
-2. 瀏覽 [外部圖片載入問題分析](./external-image-issue-analysis.md) - 5 分鐘
-3. 開始使用現有的代理方案
+1. 閱讀 [完整解決方案總結](./COMPLETE_SOLUTION_SUMMARY.md) - 15 分鐘
+2. 設定必要的環境變數（CREATOMATE tokens）
+3. 如需 GIF 動畫：設定 [CloudConvert](./convertapi-setup.md) - 5 分鐘
+4. 開始使用
 
-**適合**：需要快速解決問題的開發者
+**適合**：所有開發者
 
-### 路徑 2：深度學習
+### 路徑 2：問題排查
+
+1. 閱讀 [外部圖片載入問題分析](./external-image-issue-analysis.md) - 10 分鐘
+2. 閱讀 [cacheAsset 深度調查](./cacheasset-investigation.md) - 10 分鐘
+3. 理解失敗原因和解決過程
+
+**適合**：遇到問題需要排查的開發者
+
+### 路徑 3：深度學習
 
 1. 閱讀 [Creatomate Preview SDK 深度分析](./creatomate-preview-sdk-deep-dive.md) - 30 分鐘
 2. 實際查看原始碼 `node_modules/@creatomate/preview/src/Preview.ts`
@@ -83,7 +127,7 @@
 
 **適合**：想要完全理解底層機制的開發者
 
-### 路徑 3：技術選型
+### 路徑 4：技術選型
 
 1. 閱讀 [影片編輯框架評估](./video-editing-frameworks-evaluation.md) - 15 分鐘
 2. 閱讀 [Creatomate Preview SDK 深度分析](./creatomate-preview-sdk-deep-dive.md) - 30 分鐘
@@ -95,16 +139,17 @@
 
 ## 🔍 問題速查表
 
-| 問題 | 參考文檔 | 章節 |
-|------|---------|------|
-| 外部圖片/影片無法載入 | [外部圖片載入問題分析](./external-image-issue-analysis.md) | 解決方案分析 |
-| 如何使用 cacheAsset()? | [Preview SDK 深度分析](./creatomate-preview-sdk-deep-dive.md) | 實際程式碼範例 → 範例 1 |
-| 如何設定快取白名單? | [Preview SDK 深度分析](./creatomate-preview-sdk-deep-dive.md) | 實際程式碼範例 → 範例 2 |
-| Preview SDK 如何運作? | [Preview SDK 深度分析](./creatomate-preview-sdk-deep-dive.md) | 運作機制詳解 |
-| v1.4 改了什麼? | [Preview SDK 深度分析](./creatomate-preview-sdk-deep-dive.md) | 版本差異分析 |
-| API 請求格式? | [Creatomate API 知識庫](./creatomate-api-knowledge.md) | API 請求格式 |
+| 問題 | 參考文檔 | 解決方案 |
+|------|---------|---------|
+| 如何開始？ | [完整解決方案總結](./COMPLETE_SOLUTION_SUMMARY.md) | 完整指南 |
+| 外部圖片無法載入？ | [完整解決方案總結](./COMPLETE_SOLUTION_SUMMARY.md) | cacheAsset + Blob |
+| 外部影片無法載入？ | [完整解決方案總結](./COMPLETE_SOLUTION_SUMMARY.md) | cacheAsset + 絕對代理 URL |
+| GIF 無法動畫播放？ | [完整解決方案總結](./COMPLETE_SOLUTION_SUMMARY.md) | CloudConvert 轉 MP4 |
+| GIF 如何設定？ | [CloudConvert 設定指南](./convertapi-setup.md) | API Key 設定 |
+| R2 CORS 如何設定？ | [Cloudflare R2 CORS 設定](./cloudflare-r2-cors-setup.md) | 詳細步驟 |
+| cacheAsset 如何運作? | [cacheAsset 深度調查](./cacheasset-investigation.md) | 實驗報告 |
+| Preview SDK 架構？ | [Preview SDK 深度分析](./creatomate-preview-sdk-deep-dive.md) | 運作機制 |
 | 是否該用 Remotion? | [影片編輯框架評估](./video-editing-frameworks-evaluation.md) | 詳細對比 |
-| 研究可信嗎? | [研究驗證總結報告](./research-verification-summary.md) | 詳細評分表 |
 
 ---
 
@@ -120,13 +165,15 @@
               └─ 素材載入限制在這裡
 ```
 
-### 三大解決方案
+### 最終解決方案
 
-| 方案 | 優點 | 適用場景 | 文檔位置 |
-|------|------|----------|---------|
-| **代理方案** | 立即可用 | 所有場景 | [外部圖片分析](./external-image-issue-analysis.md) |
-| **cacheAsset()** | 官方支援 | 小檔案、已知來源 | [深度分析](./creatomate-preview-sdk-deep-dive.md) §範例1 |
-| **setCacheBypassRules()** | 效能最佳 | 自有 CDN | [深度分析](./creatomate-preview-sdk-deep-dive.md) §範例2 |
+| 素材類型 | 解決方案 | 狀態 | 文檔位置 |
+|---------|---------|------|---------|
+| **圖片（任何來源）** | cacheAsset + Blob | ✅ 100% | [完整總結](./COMPLETE_SOLUTION_SUMMARY.md) |
+| **影片（有 CORS）** | 直接載入或 cacheAsset | ✅ 100% | [完整總結](./COMPLETE_SOLUTION_SUMMARY.md) |
+| **影片（無 CORS）** | cacheAsset + 絕對代理URL | ✅ 100% | [完整總結](./COMPLETE_SOLUTION_SUMMARY.md) |
+| **GIF (type=image)** | cacheAsset (定格) | ✅ 100% | [完整總結](./COMPLETE_SOLUTION_SUMMARY.md) |
+| **GIF (type=video)** | CloudConvert 轉 MP4 | ⚠️ 95% | [CloudConvert設定](./convertapi-setup.md) |
 
 ### 版本演進關鍵點
 
