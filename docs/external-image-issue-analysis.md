@@ -298,5 +298,5 @@ NEXT_PUBLIC_TEMPLATE_ID=your_template_id
 
 ---
 
-*文件創建時間：2025年1月*  
+*文件創建時間：2025年1月*
 *最後更新：2025年10月30日 - 新增 Media Proxy 實測失敗記錄*

@@ -6,32 +6,51 @@
 import { Preview } from '@creatomate/preview';
 
 /**
- * 提取 JSON 中所有的媒體 URL
- * 遞迴搜尋所有 source 屬性
+ * 媒體資訊介面
  */
-export function extractMediaUrls(obj: any, urls: Set<string> = new Set()): string[] {
+interface MediaInfo {
+  url: string;
+  type?: string;  // element type: 'image', 'video', 'audio'
+}
+
+/**
+ * 提取 JSON 中所有的媒體 URL 和類型
+ * 遞迴搜尋所有 source 屬性及其對應的 type
+ */
+export function extractMediaUrlsWithType(obj: any, medias: MediaInfo[] = []): MediaInfo[] {
   if (typeof obj !== 'object' || obj === null) {
-    return Array.from(urls);
+    return medias;
   }
 
   if (Array.isArray(obj)) {
-    obj.forEach(item => extractMediaUrls(item, urls));
-    return Array.from(urls);
+    obj.forEach(item => extractMediaUrlsWithType(item, medias));
+    return medias;
   }
 
+  // 檢查是否為包含 source 的元素
+  if (obj.source && typeof obj.source === 'string' && isExternalUrl(obj.source)) {
+    medias.push({
+      url: obj.source,
+      type: obj.type  // 'image', 'video', 'audio' 等
+    });
+  }
+
+  // 遞迴處理嵌套物件
   for (const [key, value] of Object.entries(obj)) {
-    if (key === 'source' && typeof value === 'string') {
-      // 找到 source 屬性
-      if (isExternalUrl(value)) {
-        urls.add(value);
-      }
-    } else if (typeof value === 'object') {
-      // 遞迴處理嵌套物件
-      extractMediaUrls(value, urls);
+    if (typeof value === 'object') {
+      extractMediaUrlsWithType(value, medias);
     }
   }
 
-  return Array.from(urls);
+  return medias;
+}
+
+/**
+ * 向後相容：只提取 URL
+ */
+export function extractMediaUrls(obj: any): string[] {
+  const medias = extractMediaUrlsWithType(obj);
+  return medias.map(m => m.url);
 }
 
 /**
@@ -88,19 +107,22 @@ export async function cacheExternalAssets(
   failed: Array<{ url: string; error: string }>;
   urlMapping: Map<string, string>;
 }> {
-  const urls = extractMediaUrls(json);
+  const medias = extractMediaUrlsWithType(json);
   const success: string[] = [];
   const failed: Array<{ url: string; error: string }> = [];
   const urlMapping = new Map<string, string>();
 
-  if (urls.length === 0) {
+  if (medias.length === 0) {
     console.log(`[cacheAsset] 沒有外部素材需要快取`);
     return { success, failed, urlMapping };
   }
 
-  console.log(`[cacheAsset] 發現 ${urls.length} 個外部素材需要快取:`, urls);
+  console.log(`[cacheAsset] 發現 ${medias.length} 個外部素材需要快取`);
+  medias.forEach(m => console.log(`  - ${m.type || 'unknown'}: ${m.url}`));
 
-  for (const url of urls) {
+  for (const media of medias) {
+    const url = media.url;
+    const elementType = media.type;
     try {
       console.log(`[cacheAsset] 開始下載: ${url}`);
       
@@ -149,22 +171,57 @@ export async function cacheExternalAssets(
 
       console.log(`[cacheAsset] 下載完成: ${url} (${blob.size} bytes, ${blob.type})`);
 
-      // 🔧 關鍵策略：如果是透過代理下載的，用代理的絕對 URL 快取
-      // 這樣 iframe 驗證 URL 時會成功（代理 URL 真的存在）
+      // 🔧 根據 URL 和 element type 決定處理策略
       let cacheUrl = url;
+      let shouldCache = true;
       
-      if (url.toLowerCase().includes('2050today.org') || 
-          (!url.includes('creatomate') && !url.includes('blocktempo.ai'))) {
-        // 無 CORS 的外部素材 → 使用代理 URL
+      const isGif = url.toLowerCase().includes('.gif');
+      const isVideoType = elementType === 'video';
+      
+      // === 策略 1：GIF 且 type="video" → 轉換為 MP4 ===
+      if (isGif && isVideoType) {
+        console.log(`[cacheAsset] 🎬 GIF (type=video)，轉換為 MP4...`);
+        
+        try {
+          const convertResponse = await fetch('/api/convert-gif', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gifUrl: url })
+          });
+          
+          if (!convertResponse.ok) throw new Error(`API ${convertResponse.status}`);
+          
+          const result = await convertResponse.json();
+          
+          if (result.success && result.mp4Url) {
+            cacheUrl = result.mp4Url;
+            urlMapping.set(url, cacheUrl);
+            console.log(`[cacheAsset] ✅ GIF → MP4: ${cacheUrl}`);
+            shouldCache = false;
+            success.push(url);
+            continue;
+          }
+        } catch (e) {
+          console.warn(`[cacheAsset] GIF 轉換失敗，保持原始`);
+        }
+      }
+      // === 策略 2：GIF 且 type="image" → 保持原樣（顯示定格）===
+      else if (isGif) {
+        console.log(`[cacheAsset] 🖼️ GIF (type=image)，保持原樣`);
+        // 正常快取，可顯示定格
+      }
+      // === 策略 3：無 CORS 影片（僅 2050today.org）===
+      else if (url.toLowerCase().includes('2050today.org')) {
         cacheUrl = getAbsoluteProxyUrl(url);
         urlMapping.set(url, cacheUrl);
-        globalUrlMapping.set(url, cacheUrl);
-        console.log(`[cacheAsset] 🔧 使用代理 URL: ${url} → ${cacheUrl}`);
+        console.log(`[cacheAsset] 🔧 無 CORS，使用代理 URL`);
       }
 
-      // 快取到 Preview SDK
-      await preview.cacheAsset(cacheUrl, blob);
-      console.log(`[cacheAsset] ✅ 快取成功: ${cacheUrl}`);
+      // 快取（如果需要）
+      if (shouldCache) {
+        await preview.cacheAsset(cacheUrl, blob);
+        console.log(`[cacheAsset] ✅ 快取: ${cacheUrl.substring(0, 60)}...`);
+      }
       
       success.push(url);
       

@@ -1,0 +1,1 @@
+{"error":"GIF 轉換失敗","message":"ConvertAPI 錯誤: 400 - {\"Code\":4000,\"Message\":\"Parameter validation error.\",\"InvalidParameters\":{\"SourceFileFormat, DestinationFileFormat\":[\"Unsupported conversion gif -> mp4\"]}}"}
