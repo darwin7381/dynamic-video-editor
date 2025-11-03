@@ -85,11 +85,25 @@ const JSONTest: React.FC = () => {
     source: string;
     path: string;
   }>>([]);
+  
+  // 🔧 同步到 ref（讓 onTimeChange 能取得最新值）
+  React.useEffect(() => {
+    timelineElementsRef.current = timelineElements;
+  }, [timelineElements]);
+  
+  React.useEffect(() => {
+    jsonInputRef.current = jsonInput;
+    console.log('[Ref更新] jsonInput 長度:', jsonInput.length);
+  }, [jsonInput]);
   const [currentEditingElement, setCurrentEditingElement] = useState<number>(-1);
   const previewRef = useRef<Preview>();
   const previewContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const cursorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 🔧 使用 ref 儲存最新的值（避免閉包問題）
+  const timelineElementsRef = useRef<typeof timelineElements>([]);
+  const jsonInputRef = useRef<string>('');
 
   // 解析時間軸元素（支援composition嵌套結構）
   const parseTimelineElements = useCallback((source: any) => {
@@ -274,6 +288,32 @@ const JSONTest: React.FC = () => {
     }
   }, []);
 
+  // 🔄 處理時間變化（獨立函數，可訪問最新 state）
+  const handleTimeChange = useCallback((time: number) => {
+    const elements = timelineElements;
+    
+    if (!elements || elements.length === 0) return;
+    
+    // 找到所有活躍元素
+    const activeElements = elements
+      .map((el, index) => ({ el, index }))
+      .filter(({ el }) => time >= el.time && time < (el.time + el.duration));
+    
+    if (activeElements.length > 0) {
+      const primary = activeElements[activeElements.length - 1];
+      
+      setCurrentEditingElement(primary.index);
+      
+      // 使用當前的 jsonInput（不是 ref）
+      const range = findElementRange(jsonInput, primary.index);
+      if (range) {
+        setCurrentElementRange(range);
+      }
+    } else {
+      setCurrentElementRange(null);
+    }
+  }, [timelineElements, jsonInput]);
+
   // 設置預覽
   const setUpPreview = useCallback((htmlElement: HTMLDivElement) => {
     if (previewRef.current) {
@@ -407,6 +447,9 @@ const JSONTest: React.FC = () => {
           console.log('預覽持續時間:', state.duration);
         }
       };
+      
+      // 🔄 監聽時間變化（直接調用外部函數）
+      preview.onTimeChange = handleTimeChange;
 
 
 
@@ -415,7 +458,7 @@ const JSONTest: React.FC = () => {
       console.error('預覽初始化失敗:', err);
       setError(`預覽初始化失敗: ${err instanceof Error ? err.message : '未知錯誤'}`);
     }
-  }, [jsonInput]);
+  }, [jsonInput, handleTimeChange, parseTimelineElements]);
 
   // 加載 JSON
   const loadJSON = useCallback(async () => {
@@ -912,12 +955,15 @@ const JSONTest: React.FC = () => {
                   const timelineIndex = timelineElements.findIndex((timelineElement, index) => {
                     const typeMatch = timelineElement.type === elementType;
                     
-                    // 策略1: 對於有source的元素，優先使用source匹配
+                    // 策略1: 對於有source的元素，使用 source + 時間匹配（避免相同 source 的誤判）
                     if (elementSource && timelineElement.source) {
                       const sourceMatch = timelineElement.source === elementSource;
-                      console.log(`  策略1-source匹配: ${sourceMatch} (${elementSource} vs ${timelineElement.source})`);
-                      if (typeMatch && sourceMatch) {
-                        return true;
+                      const timeMatch = Math.abs(timelineElement.time - elementTime) < 0.01;
+                      
+                      console.log(`  策略1-source+時間匹配: source=${sourceMatch}, time=${timeMatch} (時間: ${elementTime}s vs ${timelineElement.time}s)`);
+                      
+                      if (typeMatch && sourceMatch && timeMatch) {
+                        return true;  // 必須 source 和時間都匹配
                       }
                     }
                     
@@ -1541,14 +1587,14 @@ const JSONTest: React.FC = () => {
               />
               
               {/* 層3: Textarea（最上層，透明背景）*/}
-              <JSONTextarea
-                ref={textareaRef}
-                value={jsonInput}
-                onChange={(e) => setJsonInput(e.target.value)}
-                onClick={handleCursorChange}
-                onKeyUp={handleCursorChange}
-                onFocus={handleCursorChange}
-                onSelect={handleCursorChange}
+            <JSONTextarea
+              ref={textareaRef}
+              value={jsonInput}
+              onChange={(e) => setJsonInput(e.target.value)}
+              onClick={handleCursorChange}
+              onKeyUp={handleCursorChange}
+              onFocus={handleCursorChange}
+              onSelect={handleCursorChange}
                 onScroll={(e) => {
                   // 同步滾動到所有 overlay
                   const container = e.currentTarget.parentElement;
@@ -1560,8 +1606,8 @@ const JSONTest: React.FC = () => {
                     });
                   }
                 }}
-                placeholder="在此輸入你的 JSON..."
-              />
+              placeholder="在此輸入你的 JSON..."
+            />
             </EditorContainer>
           </LeftPanel>
 
