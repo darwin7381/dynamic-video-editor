@@ -73,8 +73,8 @@ const JSONTest: React.FC = () => {
   // 🎨 URL 狀態追蹤（用於視覺高亮）
   const [urlStatus, setUrlStatus] = useState<Map<string, UrlStatus>>(new Map());
   
-  // 🎨 當前元素範圍（用於高亮當前正在預覽的元素）
-  const [currentElementRange, setCurrentElementRange] = useState<CurrentElementRange | null>(null);
+  // 🎨 當前元素範圍（用於高亮當前正在預覽的元素）- 支援多個
+  const [currentElementRanges, setCurrentElementRanges] = useState<CurrentElementRange[]>([]);
   const [timelineElements, setTimelineElements] = useState<Array<{
     id: string;
     time: number;
@@ -93,7 +93,6 @@ const JSONTest: React.FC = () => {
   
   React.useEffect(() => {
     jsonInputRef.current = jsonInput;
-    console.log('[Ref更新] jsonInput 長度:', jsonInput.length);
   }, [jsonInput]);
   const [currentEditingElement, setCurrentEditingElement] = useState<number>(-1);
   const previewRef = useRef<Preview>();
@@ -300,19 +299,33 @@ const JSONTest: React.FC = () => {
       .filter(({ el }) => time >= el.time && time < (el.time + el.duration));
     
     if (activeElements.length > 0) {
+      // 收集所有活躍元素的範圍
+      const ranges: CurrentElementRange[] = [];
+      
+      activeElements.forEach(({ el, index }) => {
+        const range = findElementRange(jsonInput, index);
+        if (range) {
+          ranges.push(range);
+        }
+      });
+      
+      // 設定所有範圍（多個元素同時高亮）
+      setCurrentElementRanges(ranges);
+      
+      // 設定主要元素（用於時間軸高亮）
       const primary = activeElements[activeElements.length - 1];
-      
       setCurrentEditingElement(primary.index);
-      
-      // 使用當前的 jsonInput（不是 ref）
-      const range = findElementRange(jsonInput, primary.index);
-      if (range) {
-        setCurrentElementRange(range);
-      }
     } else {
-      setCurrentElementRange(null);
+      setCurrentElementRanges([]);
     }
   }, [timelineElements, jsonInput]);
+  
+  // 🔧 當 handleTimeChange 更新時，重新綁定到 preview
+  React.useEffect(() => {
+    if (previewRef.current && previewReady) {
+      previewRef.current.onTimeChange = handleTimeChange;
+    }
+  }, [handleTimeChange, previewReady]);
 
   // 設置預覽
   const setUpPreview = useCallback((htmlElement: HTMLDivElement) => {
@@ -857,10 +870,10 @@ const JSONTest: React.FC = () => {
         setCurrentEditingElement(elementIndex);
         console.log(`🎯 同步更新高亮元素索引: ${elementIndex}`);
         
-        // 🎨 更新 JSON 中的元素高亮範圍
+        // 🎨 更新 JSON 中的元素高亮範圍（點擊時只高亮一個）
         const range = findElementRange(jsonInput, elementIndex);
         if (range) {
-          setCurrentElementRange(range);
+          setCurrentElementRanges([range]);  // 改回陣列
           console.log(`🎨 高亮 JSON 元素: ${range.start}-${range.end}`);
         }
       }
@@ -1570,11 +1583,13 @@ const JSONTest: React.FC = () => {
             </ButtonGroup>
             
             <EditorContainer>
-              {/* 層1: 當前元素區域高亮（最底層，整區淡藍）*/}
-              {currentElementRange && (
+              {/* 層1: 當前元素區域高亮（最底層，整區淡藍）- 支援多個 */}
+              {currentElementRanges.length > 0 && (
                 <ElementHighlightOverlay
                   dangerouslySetInnerHTML={{
-                    __html: generateElementHighlight(jsonInput, currentElementRange)
+                    __html: currentElementRanges
+                      .map(range => generateElementHighlight(jsonInput, range))
+                      .join('')
                   }}
                 />
               )}
