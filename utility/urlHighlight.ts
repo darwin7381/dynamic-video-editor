@@ -37,7 +37,7 @@ export function generateMultipleElementHighlights(
   let result = '';
   let lastIndex = 0;
   
-  sortedRanges.forEach(range => {
+  sortedRanges.forEach((range, index) => {
     // 找到元素前的縮排
     let indentStart = range.start;
     while (indentStart > lastIndex && text[indentStart - 1] !== '\n') {
@@ -55,9 +55,23 @@ export function generateMultipleElementHighlights(
     // 高亮區域
     const indent = text.substring(indentStart, range.start);
     const element = text.substring(range.start, range.end);
-    result += `<div class="element-block-highlight">${escapeHtml(indent + element)}</div>`;
     
-    lastIndex = range.end;
+    // 🔧 檢查元素後是否有換行符
+    let afterElement = '';
+    if (range.end < text.length && text[range.end] === ',') {
+      afterElement = ',';  // 包含逗號
+      lastIndex = range.end + 1;
+    } else {
+      lastIndex = range.end;
+    }
+    
+    // 🔧 檢查逗號後是否有換行
+    if (lastIndex < text.length && text[lastIndex] === '\n') {
+      afterElement += '\n';  // 包含換行，避免 div 後多一個空行
+      lastIndex++;
+    }
+    
+    result += `<div class="element-block-highlight">${escapeHtml(indent + element + afterElement)}</div>`;
   });
   
   // 剩餘文字
@@ -160,7 +174,8 @@ function escapeHtml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
-    .replace(/ /g, '&nbsp;')
+    // 🔧 不用 &nbsp;，保留正常空格，讓長 URL 可以自動換行
+    // .replace(/ /g, '&nbsp;')  ← 移除這行
     .replace(/\n/g, '<br/>');
 }
 
@@ -197,7 +212,89 @@ export function getStatusText(status: UrlStatus): string {
 }
 
 /**
- * 在 JSON 文字中找到第 N 個元素的位置範圍
+ * 根據 path 在 JSON 中找到元素位置（支援嵌套）
+ * @param jsonText JSON 文字
+ * @param path 路徑，如 "0"（第0個元素）或 "8.0"（第8個元素的第0個子元素）
+ */
+export function findElementRangeByPath(jsonText: string, path: string): CurrentElementRange | null {
+  try {
+    const pathParts = path.split('.').map(p => parseInt(p));
+    
+    // 找到 elements 陣列
+    let searchStart = 0;
+    let arrayKey = '"elements"';
+    
+    // 逐層深入
+    for (let depth = 0; depth < pathParts.length; depth++) {
+      const targetIndex = pathParts[depth];
+      
+      const elementsPos = jsonText.indexOf(arrayKey, searchStart);
+      if (elementsPos === -1) return null;
+      
+      const arrayStart = jsonText.indexOf('[', elementsPos);
+      if (arrayStart === -1) return null;
+      
+      // 找到第 targetIndex 個元素
+      let currentIndex = 0;
+      let braceDepth = 0;
+      let inString = false;
+      let escapeNext = false;
+      let elementStart = -1;
+      
+      for (let i = arrayStart + 1; i < jsonText.length; i++) {
+        const char = jsonText[i];
+        
+        if (escapeNext) {
+          escapeNext = false;
+          continue;
+        }
+        
+        if (char === '\\') {
+          escapeNext = true;
+          continue;
+        }
+        
+        if (char === '"') {
+          inString = !inString;
+          continue;
+        }
+        
+        if (!inString) {
+          if (char === '{') {
+            if (braceDepth === 0) elementStart = i;
+            braceDepth++;
+          } else if (char === '}') {
+            braceDepth--;
+            
+            if (braceDepth === 0 && elementStart !== -1) {
+              if (currentIndex === targetIndex) {
+                // 找到目標元素
+                if (depth === pathParts.length - 1) {
+                  // 最後一層，返回範圍
+                  return { start: elementStart, end: i + 1 };
+                } else {
+                  // 還要繼續深入，更新 searchStart
+                  searchStart = elementStart;
+                  break;
+                }
+              }
+              currentIndex++;
+              elementStart = -1;
+            }
+          }
+        }
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[findElementRangeByPath] 錯誤:', error);
+    return null;
+  }
+}
+
+/**
+ * 在 JSON 文字中找到第 N 個元素的位置範圍（向後相容）
  */
 export function findElementRange(jsonText: string, elementIndex: number): CurrentElementRange | null {
   try {

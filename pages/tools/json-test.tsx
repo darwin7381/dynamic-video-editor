@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
 import { processMediaUrlsInJson } from '../../utility/mediaProxy';
 import { cacheExternalAssets, replaceGifUrlsInJson } from '../../utility/cacheAssetHelper';
-import { generateHighlightedText, generateMultipleElementHighlights, findElementRange, UrlStatus, CurrentElementRange } from '../../utility/urlHighlight';
+import { generateHighlightedText, generateMultipleElementHighlights, findElementRange, findElementRangeByPath, UrlStatus, CurrentElementRange } from '../../utility/urlHighlight';
 import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
 
 const JSONTest: React.FC = () => {
@@ -73,8 +73,9 @@ const JSONTest: React.FC = () => {
   // 🎨 URL 狀態追蹤（用於視覺高亮）
   const [urlStatus, setUrlStatus] = useState<Map<string, UrlStatus>>(new Map());
   
-  // 🎨 當前元素範圍（用於高亮當前正在預覽的元素）- 支援多個
-  const [currentElementRanges, setCurrentElementRanges] = useState<CurrentElementRange[]>([]);
+  // 🎨 元素高亮範圍
+  const [autoHighlightRanges, setAutoHighlightRanges] = useState<CurrentElementRange[]>([]);  // 自動播放（淺灰）
+  const [clickedHighlightRange, setClickedHighlightRange] = useState<CurrentElementRange | null>(null);  // 點擊選中（淡藍）
   const [timelineElements, setTimelineElements] = useState<Array<{
     id: string;
     time: number;
@@ -299,24 +300,28 @@ const JSONTest: React.FC = () => {
       .filter(({ el }) => time >= el.time && time < (el.time + el.duration));
     
     if (activeElements.length > 0) {
-      // 收集所有活躍元素的範圍
+      // 收集所有活躍元素的範圍（使用 path 精確定位）
       const ranges: CurrentElementRange[] = [];
       
       activeElements.forEach(({ el, index }) => {
-        const range = findElementRange(jsonInput, index);
+        // 🔧 優先使用 path（支援嵌套），fallback 到 index
+        const range = el.path 
+          ? findElementRangeByPath(jsonInput, el.path)
+          : findElementRange(jsonInput, index);
+        
         if (range) {
           ranges.push(range);
         }
       });
       
-      // 設定所有範圍（多個元素同時高亮）
-      setCurrentElementRanges(ranges);
+      // 設定所有範圍為自動高亮
+      setAutoHighlightRanges(ranges);
       
       // 設定主要元素（用於時間軸高亮）
       const primary = activeElements[activeElements.length - 1];
       setCurrentEditingElement(primary.index);
     } else {
-      setCurrentElementRanges([]);
+      setAutoHighlightRanges([]);
     }
   }, [timelineElements, jsonInput]);
   
@@ -858,23 +863,27 @@ const JSONTest: React.FC = () => {
   }, [jsonInput, parseTimelineElements, previewReady]); // 加入 previewReady 依賴
 
   // 跳轉到特定時間
-  const seekToTime = useCallback(async (time: number, elementIndex?: number) => {
+  const seekToTime = useCallback(async (time: number, elementIndex?: number, elementPath?: string) => {
     if (!previewRef.current || !previewReady) return;
     
     try {
       await previewRef.current.setTime(time);
       console.log(`跳轉到時間: ${time}秒`);
       
-      // 如果提供了元素索引，同步更新高亮狀態
+      // 如果提供了元素資訊，同步更新高亮狀態
       if (elementIndex !== undefined && elementIndex !== currentEditingElement) {
         setCurrentEditingElement(elementIndex);
-        console.log(`🎯 同步更新高亮元素索引: ${elementIndex}`);
+        console.log(`🎯 同步更新高亮元素索引: ${elementIndex}, path: ${elementPath}`);
         
-        // 🎨 更新 JSON 中的元素高亮範圍（點擊時只高亮一個）
-        const range = findElementRange(jsonInput, elementIndex);
+        // 🎨 更新 JSON 中的元素高亮範圍（點擊 → 淡藍色）
+        // 優先使用 path（支援嵌套），fallback 到 index
+        const range = elementPath 
+          ? findElementRangeByPath(jsonInput, elementPath)
+          : findElementRange(jsonInput, elementIndex);
+        
         if (range) {
-          setCurrentElementRanges([range]);  // 改回陣列
-          console.log(`🎨 高亮 JSON 元素: ${range.start}-${range.end}`);
+          setClickedHighlightRange(range);
+          console.log(`🎨 點擊高亮: ${range.start}-${range.end}, path: ${elementPath}`);
         }
       }
     } catch (err) {
@@ -1583,16 +1592,25 @@ const JSONTest: React.FC = () => {
             </ButtonGroup>
             
             <EditorContainer>
-              {/* 層1: 當前元素區域高亮（最底層，整區淡藍）- 支援多個 */}
-              {currentElementRanges.length > 0 && (
-                <ElementHighlightOverlay
+              {/* 層1: 自動播放高亮（最底層，淺灰）- 多個元素 */}
+              {autoHighlightRanges.length > 0 && (
+                <AutoHighlightOverlay
                   dangerouslySetInnerHTML={{
-                    __html: generateMultipleElementHighlights(jsonInput, currentElementRanges)
+                    __html: generateMultipleElementHighlights(jsonInput, autoHighlightRanges)
                   }}
                 />
               )}
               
-              {/* 層2: URL 狀態高亮（中層，URL 顏色）*/}
+              {/* 層2: 點擊選中高亮（中下層，淡藍）- 單個元素 */}
+              {clickedHighlightRange && (
+                <ClickedHighlightOverlay
+                  dangerouslySetInnerHTML={{
+                    __html: generateMultipleElementHighlights(jsonInput, [clickedHighlightRange])
+                  }}
+                />
+              )}
+              
+              {/* 層3: URL 狀態高亮（中上層，URL 顏色）*/}
               <UrlHighlightOverlay
                 dangerouslySetInnerHTML={{
                   __html: generateHighlightedText(jsonInput, urlStatus)
@@ -1653,7 +1671,7 @@ const JSONTest: React.FC = () => {
                     <TimelineElement
                       key={element.id}
                       $isActive={index === currentEditingElement}
-                      onClick={() => seekToTime(element.time, index)}
+                      onClick={() => seekToTime(element.time, index, element.path)}
                     >
                       <ElementTime>{element.time}s</ElementTime>
                       <ElementInfo>
@@ -2039,8 +2057,8 @@ const JSONTextarea = styled.textarea`
   }
 `;
 
-/* 元素區域高亮層（最底層）*/
-const ElementHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
+/* 通用 Overlay 樣式 */
+const baseOverlayStyle = `
   position: absolute;
   top: 0;
   left: 0;
@@ -2054,38 +2072,39 @@ const ElementHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow: hidden;
-  z-index: 1;
   color: transparent;
   border: 1px solid transparent;
   border-radius: 4px;
+`;
+
+/* 層1: 自動播放高亮（淡藍，無邊線）*/
+const AutoHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
+  ${baseOverlayStyle}
+  z-index: 1;
   
-  /* 整區高亮樣式 */
   .element-block-highlight {
-    display: block;  /* 整區 */
-    background-color: rgba(33, 150, 243, 0.1);  /* 淡藍背景 */
-    border-left: 4px solid #2196f3;  /* 左側藍線 */
+    display: block;
+    background-color: rgba(33, 150, 243, 0.08);  /* 淡藍背景（被動）*/
+    /* 無左側邊線 */
   }
 `;
 
-/* URL 狀態高亮層（中層）*/
+/* 層2: 點擊選中高亮（淡藍，有粗邊線）*/
+const ClickedHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
+  ${baseOverlayStyle}
+  z-index: 2;
+  
+  .element-block-highlight {
+    display: block;
+    background-color: rgba(33, 150, 243, 0.08);  /* 淡藍背景（與被動相同）*/
+    border-left: 4px solid #2196f3;  /* 藍色粗線（主動標記）*/
+  }
+`;
+
+/* 層3: URL 狀態高亮 */
 const UrlHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 15px;
-  pointer-events: none;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow: hidden;
-  z-index: 2;  /* 在元素層上方 */
-  color: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
+  ${baseOverlayStyle}
+  z-index: 3;
 `;
 
 const PreviewContainer = styled.div`

@@ -968,6 +968,177 @@ onUrlStatusChange?.(url, 'cached');
 ---
 
 **文件完成時間**：2025年11月2日  
+**最後更新**：2025年11月2日（多元素高亮、閉包問題修復）  
 **實作狀態**：✅ 完成且運作正常  
 **測試狀態**：✅ 已驗證所有場景
+
+---
+
+## 🐛 已解決的關鍵問題
+
+### 問題 1：閉包陷阱導致高亮失效
+
+**現象**：
+- 刷新頁面後，影片播放時 JSON 高亮不會更新
+- 或高亮位置永遠錯誤（使用舊的 JSON 內容）
+
+**根本原因**：
+```typescript
+// 在 setUpPreview 中設定（只執行一次）
+preview.onTimeChange = (time) => {
+  const elements = timelineElements;  ← 閉包捕獲初始值（空陣列）
+  const json = jsonInput;  ← 閉包捕獲初始值
+  // ...
+};
+```
+
+**問題**：
+- `setUpPreview` 只在頁面載入時執行一次
+- `onTimeChange` 中的 `timelineElements` 和 `jsonInput` 永遠是初始值
+- 即使後來更新 state，函數仍使用舊值
+
+**解決方案 1（失敗）**：使用 Ref
+```typescript
+const timelineElementsRef = useRef([]);
+useEffect(() => {
+  timelineElementsRef.current = timelineElements;  // 同步
+}, [timelineElements]);
+
+preview.onTimeChange = (time) => {
+  const elements = timelineElementsRef.current;  // 永遠最新
+};
+```
+
+**問題**：Ref 確實會更新，但有時序問題
+
+**解決方案 2（成功）**：獨立函數 + 重新綁定
+```typescript
+// 獨立 useCallback，依賴最新 state
+const handleTimeChange = useCallback((time) => {
+  const elements = timelineElements;  // 直接使用 state
+  const json = jsonInput;  // 直接使用 state
+  // ...
+}, [timelineElements, jsonInput]);
+
+// 每次 handleTimeChange 更新時重新綁定
+useEffect(() => {
+  if (previewRef.current) {
+    previewRef.current.onTimeChange = handleTimeChange;
+  }
+}, [handleTimeChange]);
+```
+
+**為什麼成功**：
+- ✅ `handleTimeChange` 每次 state 改變都重新創建
+- ✅ useEffect 自動重新綁定最新的函數
+- ✅ 函數內部永遠使用最新的 state
+
+---
+
+### 問題 2：相同 URL 元素的誤判
+
+**現象**：
+```json
+{
+  "elements": [
+    { "time": "0s", "source": "same.gif" },
+    { "time": "4s", "source": "same.gif" }
+  ]
+}
+```
+
+點擊第 2 個元素（4秒），但跳轉到第 1 個元素（0秒）
+
+**根本原因**：
+```typescript
+// 策略1: 只用 source 匹配
+if (elementSource === timelineElement.source) {
+  return true;  ← 找到第一個相同 source 就返回
+}
+```
+
+**解決方案**：
+```typescript
+// 策略1: source + 時間雙重匹配
+if (elementSource === timelineElement.source && 
+    Math.abs(elementTime - timelineElement.time) < 0.01) {
+  return true;  ← 必須 source 和時間都匹配
+}
+```
+
+**效果**：
+- ✅ 相同 URL 但不同時間的元素可以正確區分
+- ✅ 點擊準確
+- ✅ 播放時準確
+
+---
+
+### 問題 3：多個元素高亮時的重複文字
+
+**現象**：
+```
+4秒時有兩個元素應該同時高亮
+實際：只有一個高亮，或文字重複
+```
+
+**根本原因**：
+```typescript
+// 錯誤方式
+ranges.map(range => {
+  return 全文 + <div>元素</div> + 全文;  ← 每個都包含全文
+}).join('');
+
+// 結果：全文被重複了 N 次
+```
+
+**解決方案**：
+```typescript
+function generateMultipleElementHighlights(text, ranges) {
+  let result = '';
+  let lastIndex = 0;  // 追蹤已處理到的位置
+  
+  sortedRanges.forEach(range => {
+    // 只添加 lastIndex 到 range.start 的文字（避免重複）
+    result += text.substring(lastIndex, range.start);
+    result += `<div>元素</div>`;
+    lastIndex = range.end;  // 更新指針
+  });
+  
+  // 剩餘文字
+  result += text.substring(lastIndex);
+  
+  return result;
+}
+```
+
+**效果**：
+- ✅ 多個元素同時高亮
+- ✅ 文字不重複
+- ✅ 佈局完全正確
+
+---
+
+## 📚 學到的經驗
+
+### 1. React 閉包陷阱
+
+**問題**：在 callback 中使用 state，但 callback 只設定一次
+
+**解決**：
+- 方案A：使用 Ref（適合簡單場景）
+- 方案B：useCallback + useEffect 重新綁定（適合複雜場景）✅
+
+### 2. 元素匹配邏輯
+
+**原則**：
+- 單一條件匹配（source）→ 容易誤判
+- 多重條件匹配（source + time）→ 更準確 ✅
+
+### 3. 多範圍 HTML 生成
+
+**原則**：
+- 遍歷每個範圍生成完整 HTML → 會重複文字 ❌
+- 一次遍歷處理所有範圍 → 正確 ✅
+
+---
 
