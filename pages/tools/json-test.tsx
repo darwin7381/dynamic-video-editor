@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
 import { processMediaUrlsInJson } from '../../utility/mediaProxy';
 import { cacheExternalAssets, replaceGifUrlsInJson } from '../../utility/cacheAssetHelper';
-import { generateHighlightedText, UrlStatus } from '../../utility/urlHighlight';
+import { generateHighlightedText, generateElementHighlight, findElementRange, UrlStatus, CurrentElementRange } from '../../utility/urlHighlight';
 import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
 
 const JSONTest: React.FC = () => {
@@ -72,6 +72,9 @@ const JSONTest: React.FC = () => {
   
   // 🎨 URL 狀態追蹤（用於視覺高亮）
   const [urlStatus, setUrlStatus] = useState<Map<string, UrlStatus>>(new Map());
+  
+  // 🎨 當前元素範圍（用於高亮當前正在預覽的元素）
+  const [currentElementRange, setCurrentElementRange] = useState<CurrentElementRange | null>(null);
   const [timelineElements, setTimelineElements] = useState<Array<{
     id: string;
     time: number;
@@ -810,11 +813,18 @@ const JSONTest: React.FC = () => {
       if (elementIndex !== undefined && elementIndex !== currentEditingElement) {
         setCurrentEditingElement(elementIndex);
         console.log(`🎯 同步更新高亮元素索引: ${elementIndex}`);
+        
+        // 🎨 更新 JSON 中的元素高亮範圍
+        const range = findElementRange(jsonInput, elementIndex);
+        if (range) {
+          setCurrentElementRange(range);
+          console.log(`🎨 高亮 JSON 元素: ${range.start}-${range.end}`);
+        }
       }
     } catch (err) {
       console.error('跳轉時間失敗:', err);
     }
-  }, [previewReady, currentEditingElement]);
+  }, [previewReady, currentEditingElement, jsonInput]);
 
   // 檢測當前編輯的元素（按時間軸順序修正版本）
   const detectCurrentElement = useCallback((cursorPosition: number, jsonText: string, timelineElements: Array<any>) => {
@@ -1514,36 +1524,44 @@ const JSONTest: React.FC = () => {
             </ButtonGroup>
             
             <EditorContainer>
-              <HighlightOverlay
+              {/* 層1: 當前元素區域高亮（最底層，整區淡藍）*/}
+              {currentElementRange && (
+                <ElementHighlightOverlay
+                  dangerouslySetInnerHTML={{
+                    __html: generateElementHighlight(jsonInput, currentElementRange)
+                  }}
+                />
+              )}
+              
+              {/* 層2: URL 狀態高亮（中層，URL 顏色）*/}
+              <UrlHighlightOverlay
                 dangerouslySetInnerHTML={{
                   __html: generateHighlightedText(jsonInput, urlStatus)
                 }}
-                onScroll={(e) => {
-                  // 同步滾動到 textarea
-                  if (textareaRef.current) {
-                    textareaRef.current.scrollTop = e.currentTarget.scrollTop;
-                    textareaRef.current.scrollLeft = e.currentTarget.scrollLeft;
-                  }
-                }}
               />
-            <JSONTextarea
-              ref={textareaRef}
-              value={jsonInput}
-              onChange={(e) => setJsonInput(e.target.value)}
-              onClick={handleCursorChange}
-              onKeyUp={handleCursorChange}
-              onFocus={handleCursorChange}
-              onSelect={handleCursorChange}
+              
+              {/* 層3: Textarea（最上層，透明背景）*/}
+              <JSONTextarea
+                ref={textareaRef}
+                value={jsonInput}
+                onChange={(e) => setJsonInput(e.target.value)}
+                onClick={handleCursorChange}
+                onKeyUp={handleCursorChange}
+                onFocus={handleCursorChange}
+                onSelect={handleCursorChange}
                 onScroll={(e) => {
-                  // 同步滾動到高亮層
-                  const overlay = e.currentTarget.previousElementSibling as HTMLElement;
-                  if (overlay) {
-                    overlay.scrollTop = e.currentTarget.scrollTop;
-                    overlay.scrollLeft = e.currentTarget.scrollLeft;
+                  // 同步滾動到所有 overlay
+                  const container = e.currentTarget.parentElement;
+                  if (container) {
+                    const overlays = container.querySelectorAll('[data-overlay]');
+                    overlays.forEach(overlay => {
+                      (overlay as HTMLElement).scrollTop = e.currentTarget.scrollTop;
+                      (overlay as HTMLElement).scrollLeft = e.currentTarget.scrollLeft;
+                    });
                   }
                 }}
-              placeholder="在此輸入你的 JSON..."
-            />
+                placeholder="在此輸入你的 JSON..."
+              />
             </EditorContainer>
           </LeftPanel>
 
@@ -1962,7 +1980,8 @@ const JSONTextarea = styled.textarea`
   }
 `;
 
-const HighlightOverlay = styled.div`
+/* 元素區域高亮層（最底層）*/
+const ElementHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
   position: absolute;
   top: 0;
   left: 0;
@@ -1972,20 +1991,42 @@ const HighlightOverlay = styled.div`
   font-size: 14px;
   line-height: 1.5;
   padding: 15px;
-  pointer-events: none;  /* 點擊穿透 */
+  pointer-events: none;
   white-space: pre-wrap;
   word-wrap: break-word;
-  overflow: auto;  /* 允許滾動（與 textarea 同步）*/
-  z-index: 1;  /* 在 textarea 下方 */
-  color: transparent;  /* 文字透明（只顯示背景色）*/
+  overflow: hidden;
+  z-index: 1;
+  color: transparent;
   border: 1px solid transparent;
   border-radius: 4px;
   
-  /* 隱藏滾動條 */
-  &::-webkit-scrollbar {
-    display: none;
+  /* 整區高亮樣式 */
+  .element-block-highlight {
+    display: block;  /* 整區 */
+    background-color: rgba(33, 150, 243, 0.1);  /* 淡藍背景 */
+    border-left: 4px solid #2196f3;  /* 左側藍線 */
   }
-  scrollbar-width: none;
+`;
+
+/* URL 狀態高亮層（中層）*/
+const UrlHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 15px;
+  pointer-events: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+  z-index: 2;  /* 在元素層上方 */
+  color: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
 `;
 
 const PreviewContainer = styled.div`

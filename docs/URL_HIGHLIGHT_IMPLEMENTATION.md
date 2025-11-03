@@ -1,18 +1,27 @@
 # URL 高亮視覺回饋系統
 
 **創建時間**：2025年11月2日  
+**最後更新**：2025年11月2日（雙向高亮完成）  
 **狀態**：✅ 已實作並運作  
-**技術方案**：Overlay 層 + 滾動同步
+**技術方案**：三層 Overlay 架構 + 滾動同步
 
 ---
 
 ## 📋 功能概述
 
-### 目的
+### 雙向高亮功能
 
-在 JSON 編輯器中為外部素材 URL 提供即時的視覺狀態回饋，讓使用者直觀了解每個素材的處理進度。
+**功能 1：素材處理狀態高亮**
+- 在 JSON 編輯器中為外部素材 URL 提供即時的視覺狀態回饋
+- 讓使用者直觀了解每個素材的處理進度
+
+**功能 2：當前元素區域高亮**（新增）
+- 顯示當前正在預覽的元素
+- 雙向聯動：點擊 JSON → 時間軸，點擊時間軸 → JSON
 
 ### 視覺效果
+
+**素材狀態高亮**（URL 層）：
 
 | 狀態 | 顏色 | 說明 |
 |------|------|------|
@@ -20,12 +29,25 @@
 | **成功** | 🟩 綠色 `rgba(76, 175, 80, 0.3)` | 素材已就緒 |
 | **失敗** | 🟥 紅色 `rgba(244, 67, 54, 0.3)` | 處理失敗 |
 
+**當前元素高亮**（區域層）：
+
+| 元素 | 視覺效果 | 說明 |
+|------|---------|------|
+| **當前元素** | 💙 淡藍背景 + 左側藍色粗線 | 整個元素區塊高亮 |
+
+**疊加效果**：
+- 💙 底層：整個元素淡藍背景
+- 🟩 上層：URL 綠色背景（疊加在淡藍上）
+- 💙 左側：4px 藍色粗線
+
 ### 設計原則
 
 1. ✅ **不干擾編輯**：完全不影響輸入、複製、選取等操作
 2. ✅ **即時回饋**：狀態變化立即反映在視覺上
-3. ✅ **效能優先**：只在狀態改變時重新渲染
-4. ✅ **滾動同步**：高亮層隨 textarea 滾動移動
+3. ✅ **雙向聯動**：JSON ⇄ 時間軸/預覽
+4. ✅ **效能優先**：只在狀態改變時重新渲染
+5. ✅ **滾動同步**：所有高亮層隨 textarea 滾動移動
+6. ✅ **不衝突**：兩種高亮完美疊加，互不干擾
 
 ---
 
@@ -37,11 +59,40 @@
 
 | 方案 | 優點 | 缺點 | 選擇 |
 |------|------|------|------|
-| **A. CSS Custom Highlights** | 瀏覽器原生，完美 | 需 Chrome 105+ | ❌ 相容性問題 |
-| **B. Overlay + 滾動同步** | 所有瀏覽器支援，可控 | 需同步滾動 | ✅ **已採用** |
-| **C. Monaco Editor** | 功能強大 | 額外套件，改動大 | ❌ 過度工程 |
+| **A. CSS Custom Highlights** | 瀏覽器原生，完美 | 需 Chrome 105+，textarea 不支援 | ❌ 技術限制 |
+| **B. 單層 Overlay** | 簡單 | 無法同時實現整行背景和 URL 高亮 | ❌ 功能不足 |
+| **C. 三層 Overlay 架構** | 完美支援雙向高亮，互不干擾 | 需三層同步 | ✅ **已採用** |
+| **D. Monaco Editor** | 功能強大 | 額外套件，改動大 | ❌ 過度工程 |
 
-**最終選擇**：方案 B（Overlay + 滾動同步）
+**最終選擇**：方案 C（三層 Overlay 架構）
+
+### 三層架構說明
+
+```
+┌─────────────────────────────────────┐
+│ 層3: JSONTextarea（z-index: 3）     │ ← 最上層
+│ - 顯示文字                           │
+│ - 接收輸入                           │
+│ - 背景透明                           │
+├─────────────────────────────────────┤
+│ 層2: UrlHighlightOverlay（z-index: 2）│ ← 中層
+│ - 只顯示 URL 狀態背景（黃/綠/紅）    │
+│ - 文字透明                           │
+│ - 使用 <span> inline 元素            │
+├─────────────────────────────────────┤
+│ 層1: ElementHighlightOverlay（z-index: 1）│ ← 底層
+│ - 顯示當前元素整區背景（淡藍）       │
+│ - 文字透明                           │
+│ - 使用 <div> block 元素（整行）      │
+│ - 左側 4px 藍色粗線                  │
+└─────────────────────────────────────┘
+```
+
+**為什麼需要三層？**
+1. **層1（元素）**：需要 `<div block>` 才能整行背景
+2. **層2（URL）**：需要 `<span inline>` 才能精確定位
+3. **層3（文字）**：textarea 本身
+4. **三者疊加**：實現複雜的視覺效果，且完全不衝突
 
 ---
 
@@ -49,7 +100,7 @@
 
 ### 1. 資料結構
 
-**URL 狀態追蹤**：
+**素材狀態追蹤**：
 ```typescript
 // State: Map<URL, Status>
 const [urlStatus, setUrlStatus] = useState<Map<string, UrlStatus>>(new Map());
@@ -58,11 +109,25 @@ const [urlStatus, setUrlStatus] = useState<Map<string, UrlStatus>>(new Map());
 export type UrlStatus = 'processing' | 'success' | 'error';
 ```
 
+**當前元素追蹤**（新增）：
+```typescript
+// State: 當前元素在 JSON 中的位置範圍
+const [currentElementRange, setCurrentElementRange] = useState<CurrentElementRange | null>(null);
+
+// 類型定義
+export interface CurrentElementRange {
+  start: number;  // 元素 { 的位置
+  end: number;    // 元素 } 的位置
+}
+```
+
 ### 2. 高亮生成函數
 
 **檔案**：`utility/urlHighlight.ts`
 
 **核心函數**：
+
+#### A. URL 狀態高亮
 ```typescript
 export function generateHighlightedText(
   text: string,
@@ -77,19 +142,67 @@ export function generateHighlightedText(
 3. 生成 HTML：
    - 普通文字：跳脫 HTML
    - 高亮 URL：<span style="background-color: ...">URL</span>
-4. 返回完整的 HTML 字串
+4. 返回完整的 HTML 字串（用於層2）
+```
+
+#### B. 當前元素區域高亮（新增）
+```typescript
+export function generateElementHighlight(
+  text: string,
+  elementRange: CurrentElementRange
+): string
+```
+
+**運作流程**：
+```
+1. 找到元素前的縮排（從上一個 \n 到 { 之間的空格）
+2. 將縮排 + 元素包在 <div> 中
+3. 生成 HTML：
+   - 元素前：普通文字
+   - 元素區：<div class="element-block-highlight">縮排+元素</div>
+   - 元素後：普通文字
+4. 返回完整的 HTML 字串（用於層1）
 ```
 
 **範例**：
 ```typescript
 輸入 text:
-  { "source": "https://example.com/image.jpg" }
-
-urlStatusMap:
-  "https://example.com/image.jpg" → "success"
+  {
+    "elements": [
+      {  ← elementRange.start
+        "type": "image",
+        "source": "..."
+      }  ← elementRange.end
+    ]
+  }
 
 輸出 HTML:
-  { "source": "<span style='background-color: rgba(76,175,80,0.3);'>https://example.com/image.jpg</span>" }
+  {
+    "elements": [
+  <div class="element-block-highlight">    {
+        "type": "image",
+        "source": "..."
+      }</div>
+    ]
+  }
+```
+
+**關鍵**：包含縮排，這樣 `<div>` 換行後位置才正確！
+
+#### C. 元素範圍查找（新增）
+```typescript
+export function findElementRange(
+  jsonText: string,
+  elementIndex: number
+): CurrentElementRange | null
+```
+
+**運作流程**：
+```
+1. 找到 "elements": [ 的位置
+2. 遍歷 JSON，追蹤大括號深度
+3. 找到第 N 個元素的 { 和 } 位置
+4. 返回 { start, end }
 ```
 
 ### 3. UI 結構
@@ -317,16 +430,19 @@ Layer 0（最底層）：EditorContainer
 
 ---
 
-## ⚠️ 已知限制
+## ⚠️ 已知限制與解決方案
 
 ### 1. 字體必須等寬
 
 **要求**：Monaco、Menlo 等等寬字體  
-**原因**：HTML 渲染需要與 textarea 完全對齊
+**原因**：三層 overlay 需要完全對齊
 
 **已設定**：
 ```css
 font-family: 'Monaco', 'Menlo', monospace;
+font-size: 14px;
+line-height: 1.5;
+padding: 15px;  /* 三層完全相同 */
 ```
 
 ### 2. 相同 URL 的處理
@@ -342,7 +458,9 @@ font-family: 'Monaco', 'Menlo', monospace;
 }
 ```
 
-**行為**：兩處都會高亮相同顏色（正確）
+**行為**：
+- ✅ 兩處都會高亮相同顏色（正確）
+- ✅ 只下載/處理一次（已去重）
 
 ### 3. 長 URL 換行
 
@@ -357,6 +475,31 @@ font-family: 'Monaco', 'Menlo', monospace;
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
            高亮跨越兩行（正確）
 ```
+
+### 4. 元素高亮的對齊問題（已解決）
+
+**問題**：`<div>` 會換行，導致錯位
+
+**解決方案**：
+```typescript
+// 包含元素前的縮排
+const indent = text.substring(indentStart, elementRange.start);
+return `<div>${escapeHtml(indent + element)}</div>`;
+```
+
+**關鍵**：縮排也包在 div 中，這樣換行位置正確！
+
+### 5. 兩種高亮的衝突（已解決）
+
+**問題**：
+- 當前元素：整行淡藍
+- URL 狀態：URL 顏色
+- 兩者會衝突
+
+**解決方案**：
+- ✅ 使用兩個獨立的 overlay 層
+- ✅ z-index 分層
+- ✅ 視覺疊加，互不干擾
 
 ---
 
