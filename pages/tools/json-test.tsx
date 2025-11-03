@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
 import { processMediaUrlsInJson } from '../../utility/mediaProxy';
 import { cacheExternalAssets, replaceGifUrlsInJson } from '../../utility/cacheAssetHelper';
-import { generateHighlightedText, generateElementHighlight, findElementRange, UrlStatus, CurrentElementRange } from '../../utility/urlHighlight';
+import { generateHighlightedText, generateMultipleElementHighlights, findElementRange, UrlStatus, CurrentElementRange } from '../../utility/urlHighlight';
 import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
 
 const JSONTest: React.FC = () => {
@@ -1587,9 +1587,7 @@ const JSONTest: React.FC = () => {
               {currentElementRanges.length > 0 && (
                 <ElementHighlightOverlay
                   dangerouslySetInnerHTML={{
-                    __html: currentElementRanges
-                      .map(range => generateElementHighlight(jsonInput, range))
-                      .join('')
+                    __html: generateMultipleElementHighlights(jsonInput, currentElementRanges)
                   }}
                 />
               )}

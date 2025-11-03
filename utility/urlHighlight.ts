@@ -20,30 +20,62 @@ export interface CurrentElementRange {
  * 2. 當前編輯元素高亮（左側藍色邊框 + 淡藍背景）
  */
 /**
- * 生成當前元素的整區高亮（獨立層）
+ * 生成多個元素的整區高亮（獨立層）
+ * 正確處理多個範圍，避免重複文字
+ */
+export function generateMultipleElementHighlights(
+  text: string,
+  elementRanges: CurrentElementRange[]
+): string {
+  if (elementRanges.length === 0) {
+    return escapeHtml(text);
+  }
+  
+  // 按位置排序
+  const sortedRanges = [...elementRanges].sort((a, b) => a.start - b.start);
+  
+  let result = '';
+  let lastIndex = 0;
+  
+  sortedRanges.forEach(range => {
+    // 找到元素前的縮排
+    let indentStart = range.start;
+    while (indentStart > lastIndex && text[indentStart - 1] !== '\n') {
+      if (text[indentStart - 1] !== ' ' && text[indentStart - 1] !== '\t') {
+        break;
+      }
+      indentStart--;
+    }
+    
+    // 範圍前的普通文字
+    if (indentStart > lastIndex) {
+      result += escapeHtml(text.substring(lastIndex, indentStart));
+    }
+    
+    // 高亮區域
+    const indent = text.substring(indentStart, range.start);
+    const element = text.substring(range.start, range.end);
+    result += `<div class="element-block-highlight">${escapeHtml(indent + element)}</div>`;
+    
+    lastIndex = range.end;
+  });
+  
+  // 剩餘文字
+  if (lastIndex < text.length) {
+    result += escapeHtml(text.substring(lastIndex));
+  }
+  
+  return result;
+}
+
+/**
+ * 向後相容：單個元素高亮
  */
 export function generateElementHighlight(
   text: string,
   elementRange: CurrentElementRange
 ): string {
-  // 🔧 關鍵：找到元素前的縮排（從上一個換行到 { 之間的空白）
-  let indentStart = elementRange.start;
-  while (indentStart > 0 && text[indentStart - 1] !== '\n') {
-    if (text[indentStart - 1] !== ' ' && text[indentStart - 1] !== '\t') {
-      break;  // 遇到非空白字元，停止
-    }
-    indentStart--;
-  }
-  
-  const before = text.substring(0, indentStart);
-  const indent = text.substring(indentStart, elementRange.start);  // 縮排
-  const element = text.substring(elementRange.start, elementRange.end);
-  const after = text.substring(elementRange.end);
-  
-  // div 包含縮排，這樣換行位置才對
-  return escapeHtml(before) + 
-         `<div class="element-block-highlight">${escapeHtml(indent + element)}</div>` +
-         escapeHtml(after);
+  return generateMultipleElementHighlights(text, [elementRange]);
 }
 
 /**
