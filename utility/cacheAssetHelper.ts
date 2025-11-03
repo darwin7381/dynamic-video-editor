@@ -113,20 +113,27 @@ export async function cacheExternalAssets(
   failed: Array<{ url: string; error: string }>;
   urlMapping: Map<string, string>;
 }> {
-  const medias = extractMediaUrlsWithType(json);
+  const allMedias = extractMediaUrlsWithType(json);
+  
+  // 🔧 去重：相同 URL 只處理一次
+  const uniqueMedias = Array.from(
+    new Map(allMedias.map(m => [m.url, m])).values()
+  );
+  
   const success: string[] = [];
   const failed: Array<{ url: string; error: string }> = [];
   const urlMapping = new Map<string, string>();
 
-  if (medias.length === 0) {
+  if (uniqueMedias.length === 0) {
     console.log(`[cacheAsset] 沒有外部素材需要快取`);
     return { success, failed, urlMapping };
   }
 
-  console.log(`[cacheAsset] 發現 ${medias.length} 個外部素材需要快取`);
-  medias.forEach(m => console.log(`  - ${m.type || 'unknown'}: ${m.url}`));
+  console.log(`[cacheAsset] 發現 ${allMedias.length} 個素材，去重後 ${uniqueMedias.length} 個需要處理`);
+  uniqueMedias.forEach(m => console.log(`  - ${m.type || 'unknown'}: ${m.url}`));
 
-  for (const media of medias) {
+  // 🔧 平行處理所有素材（大幅提升速度）
+  const processingPromises = uniqueMedias.map(async (media) => {
     const url = media.url;
     const elementType = media.type;
     
@@ -208,11 +215,10 @@ export async function cacheExternalAssets(
             urlMapping.set(url, cacheUrl);
             console.log(`[cacheAsset] ✅ GIF → MP4: ${cacheUrl}`);
             shouldCache = false;
-            success.push(url);
             
-            // 🔧 關鍵：通知成功（在 continue 之前）
+            // 🔧 通知成功並直接返回（GIF 轉換完成，不需要快取）
             onUrlStatusChange?.(url, 'success');
-            continue;
+            return { url, success: true };
           }
         } catch (e) {
           console.warn(`[cacheAsset] GIF 轉換失敗，保持原始`);
@@ -236,25 +242,34 @@ export async function cacheExternalAssets(
         console.log(`[cacheAsset] ✅ 快取: ${cacheUrl.substring(0, 60)}...`);
       }
       
-      success.push(url);
-      
       // 通知：成功
       onUrlStatusChange?.(url, 'success');
+      
+      return { url, success: true };
       
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error(`[cacheAsset] ❌ 完全失敗: ${url}`);
       console.error(`[cacheAsset] 錯誤:`, error);
       
-      failed.push({ url, error: errorMsg });
-      
       // 通知：失敗
       onUrlStatusChange?.(url, 'error');
       
-      // ⚠️ 重要：即使快取失敗也不拋出錯誤
-      // 讓 Preview SDK 嘗試直接載入（可能成功，如果素材有 CORS）
+      return { url, success: false, error: errorMsg };
     }
-  }
+  });
+
+  // 🔧 等待所有素材平行處理完成
+  const results = await Promise.all(processingPromises);
+  
+  // 整理結果
+  results.forEach(result => {
+    if (result.success) {
+      success.push(result.url);
+    } else {
+      failed.push({ url: result.url, error: result.error || 'Unknown error' });
+    }
+  });
 
   console.log(`[cacheAsset] 完成 - 成功: ${success.length}, 失敗: ${failed.length}`);
   

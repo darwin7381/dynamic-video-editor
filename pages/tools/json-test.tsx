@@ -1511,28 +1511,6 @@ const JSONTest: React.FC = () => {
                 匯入 JSON 請求
               </ImportApiButton>
               
-              <TestImageButton
-                onClick={loadTestImageJson}
-                disabled={!previewReady || isLoading}
-                title="測試外部圖片代理功能"
-              >
-                🧪 測試外部圖片
-              </TestImageButton>
-              
-              <TestBase64Button
-                onClick={loadTestBase64Json}
-                disabled={!previewReady || isLoading}
-                title="測試 Base64 圖片方法"
-              >
-                🔧 測試 Base64
-              </TestBase64Button>
-              
-              <AssetsButton
-                onClick={() => setShowAssetsModal(true)}
-                title="載入 Creatomate 官方素材"
-              >
-                📁 載入素材列表
-              </AssetsButton>
             </ButtonGroup>
             
             <EditorContainer>
