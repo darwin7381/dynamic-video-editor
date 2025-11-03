@@ -1526,14 +1526,14 @@ const JSONTest: React.FC = () => {
                   }
                 }}
               />
-              <JSONTextarea
-                ref={textareaRef}
-                value={jsonInput}
-                onChange={(e) => setJsonInput(e.target.value)}
-                onClick={handleCursorChange}
-                onKeyUp={handleCursorChange}
-                onFocus={handleCursorChange}
-                onSelect={handleCursorChange}
+            <JSONTextarea
+              ref={textareaRef}
+              value={jsonInput}
+              onChange={(e) => setJsonInput(e.target.value)}
+              onClick={handleCursorChange}
+              onKeyUp={handleCursorChange}
+              onFocus={handleCursorChange}
+              onSelect={handleCursorChange}
                 onScroll={(e) => {
                   // 同步滾動到高亮層
                   const overlay = e.currentTarget.previousElementSibling as HTMLElement;
@@ -1542,8 +1542,8 @@ const JSONTest: React.FC = () => {
                     overlay.scrollLeft = e.currentTarget.scrollLeft;
                   }
                 }}
-                placeholder="在此輸入你的 JSON..."
-              />
+              placeholder="在此輸入你的 JSON..."
+            />
             </EditorContainer>
           </LeftPanel>
 
