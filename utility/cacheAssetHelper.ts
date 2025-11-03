@@ -99,9 +99,15 @@ function getAbsoluteProxyUrl(originalUrl: string): string {
  * @param json JSON 物件
  * @returns 成功快取的 URL 列表和 URL 映射（用於替換 JSON）
  */
+/**
+ * URL 狀態回調類型
+ */
+export type UrlStatusCallback = (url: string, status: 'processing' | 'success' | 'error') => void;
+
 export async function cacheExternalAssets(
   preview: Preview,
-  json: any
+  json: any,
+  onUrlStatusChange?: UrlStatusCallback
 ): Promise<{ 
   success: string[]; 
   failed: Array<{ url: string; error: string }>;
@@ -123,6 +129,10 @@ export async function cacheExternalAssets(
   for (const media of medias) {
     const url = media.url;
     const elementType = media.type;
+    
+    // 通知：開始處理
+    onUrlStatusChange?.(url, 'processing');
+    
     try {
       console.log(`[cacheAsset] 開始下載: ${url}`);
       
@@ -199,6 +209,9 @@ export async function cacheExternalAssets(
             console.log(`[cacheAsset] ✅ GIF → MP4: ${cacheUrl}`);
             shouldCache = false;
             success.push(url);
+            
+            // 🔧 關鍵：通知成功（在 continue 之前）
+            onUrlStatusChange?.(url, 'success');
             continue;
           }
         } catch (e) {
@@ -225,12 +238,18 @@ export async function cacheExternalAssets(
       
       success.push(url);
       
+      // 通知：成功
+      onUrlStatusChange?.(url, 'success');
+      
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error(`[cacheAsset] ❌ 完全失敗: ${url}`);
       console.error(`[cacheAsset] 錯誤:`, error);
       
       failed.push({ url, error: errorMsg });
+      
+      // 通知：失敗
+      onUrlStatusChange?.(url, 'error');
       
       // ⚠️ 重要：即使快取失敗也不拋出錯誤
       // 讓 Preview SDK 嘗試直接載入（可能成功，如果素材有 CORS）

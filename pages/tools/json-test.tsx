@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
 import { processMediaUrlsInJson } from '../../utility/mediaProxy';
 import { cacheExternalAssets, replaceGifUrlsInJson } from '../../utility/cacheAssetHelper';
+import { generateHighlightedText, UrlStatus } from '../../utility/urlHighlight';
 import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
 
 const JSONTest: React.FC = () => {
@@ -68,6 +69,9 @@ const JSONTest: React.FC = () => {
   // 🔧 中間處理層：分離使用者輸入與 SDK 實際使用的 JSON
   const [processedSource, setProcessedSource] = useState<any>(null);  // SDK 實際使用的
   const [urlMapping, setUrlMapping] = useState<Map<string, string>>(new Map());  // URL 映射記錄
+  
+  // 🎨 URL 狀態追蹤（用於視覺高亮）
+  const [urlStatus, setUrlStatus] = useState<Map<string, UrlStatus>>(new Map());
   const [timelineElements, setTimelineElements] = useState<Array<{
     id: string;
     time: number;
@@ -315,7 +319,14 @@ const JSONTest: React.FC = () => {
           
           // 🔧 使用 cacheAsset 預先快取所有外部素材
           console.log('🔧 [初始化] 開始快取外部素材...');
-          const cacheResult = await cacheExternalAssets(preview, source);
+          const cacheResult = await cacheExternalAssets(
+            preview, 
+            source,
+            (url, status) => {
+              // 更新 URL 狀態（用於視覺高亮）
+              setUrlStatus(prev => new Map(prev).set(url, status));
+            }
+          );
           console.log(`✅ [初始化] 快取完成 - 成功: ${cacheResult.success.length}, 失敗: ${cacheResult.failed.length}`);
           
           // 🔧 中間處理層：創建處理過的 JSON
@@ -726,7 +737,14 @@ const JSONTest: React.FC = () => {
           
           // 🔧 使用 cacheAsset 預先快取所有外部素材
           console.log('🔧 [即時更新] 開始快取外部素材...');
-          const cacheResult = await cacheExternalAssets(previewRef.current!, source);
+          const cacheResult = await cacheExternalAssets(
+            previewRef.current!,
+            source,
+            (url, status) => {
+              // 更新 URL 狀態
+              setUrlStatus(prev => new Map(prev).set(url, status));
+            }
+          );
           console.log(`✅ [即時更新] 快取完成 - 成功: ${cacheResult.success.length}, 失敗: ${cacheResult.failed.length}`);
           
           // 🔧 中間處理層：創建處理過的 JSON
@@ -1517,16 +1535,38 @@ const JSONTest: React.FC = () => {
               </AssetsButton>
             </ButtonGroup>
             
-            <JSONTextarea
-              ref={textareaRef}
-              value={jsonInput}
-              onChange={(e) => setJsonInput(e.target.value)}
-              onClick={handleCursorChange}
-              onKeyUp={handleCursorChange}
-              onFocus={handleCursorChange}
-              onSelect={handleCursorChange}
-              placeholder="在此輸入你的 JSON..."
-            />
+            <EditorContainer>
+              <HighlightOverlay
+                dangerouslySetInnerHTML={{
+                  __html: generateHighlightedText(jsonInput, urlStatus)
+                }}
+                onScroll={(e) => {
+                  // 同步滾動到 textarea
+                  if (textareaRef.current) {
+                    textareaRef.current.scrollTop = e.currentTarget.scrollTop;
+                    textareaRef.current.scrollLeft = e.currentTarget.scrollLeft;
+                  }
+                }}
+              />
+              <JSONTextarea
+                ref={textareaRef}
+                value={jsonInput}
+                onChange={(e) => setJsonInput(e.target.value)}
+                onClick={handleCursorChange}
+                onKeyUp={handleCursorChange}
+                onFocus={handleCursorChange}
+                onSelect={handleCursorChange}
+                onScroll={(e) => {
+                  // 同步滾動到高亮層
+                  const overlay = e.currentTarget.previousElementSibling as HTMLElement;
+                  if (overlay) {
+                    overlay.scrollTop = e.currentTarget.scrollTop;
+                    overlay.scrollLeft = e.currentTarget.scrollLeft;
+                  }
+                }}
+                placeholder="在此輸入你的 JSON..."
+              />
+            </EditorContainer>
           </LeftPanel>
 
           <RightPanel>
@@ -1918,19 +1958,56 @@ const AssetsButton = styled.button`
   }
 `;
 
+const EditorContainer = styled.div`
+  position: relative;
+  flex: 1;
+  display: flex;
+`;
+
 const JSONTextarea = styled.textarea`
   flex: 1;
   font-family: 'Monaco', 'Menlo', monospace;
   font-size: 14px;
+  line-height: 1.5;
   padding: 15px;
   border: 1px solid #ddd;
   border-radius: 4px;
   resize: none;
   outline: none;
+  background: transparent;  /* 讓高亮層可見 */
+  position: relative;
+  z-index: 2;  /* 在高亮層上方 */
+  color: #333;
   
   &:focus {
     border-color: #2196f3;
   }
+`;
+
+const HighlightOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 15px;
+  pointer-events: none;  /* 點擊穿透 */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: auto;  /* 允許滾動（與 textarea 同步）*/
+  z-index: 1;  /* 在 textarea 下方 */
+  color: transparent;  /* 文字透明（只顯示背景色）*/
+  border: 1px solid transparent;
+  border-radius: 4px;
+  
+  /* 隱藏滾動條 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
 `;
 
 const PreviewContainer = styled.div`
