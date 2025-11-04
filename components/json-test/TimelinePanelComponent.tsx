@@ -1,11 +1,12 @@
 import React from 'react';
 import { PreviewState } from '@creatomate/preview';
+import { TimelineElement } from '../../utility/timelineParser';
 import {
   TimelinePanel,
   TimelinePanelTitle,
   AutoJumpHint,
   TimelineElementsContainer,
-  TimelineElement,
+  TimelineElement as TimelineElementStyled,
   ActiveIndicator,
   ElementTime,
   ElementInfo,
@@ -15,19 +16,8 @@ import {
   CurrentTimeInfo,
 } from './JsonTestStyles';
 
-export interface TimelineElementData {
-  id: string;
-  time: number;
-  duration: number;
-  type: string;
-  name: string;
-  text: string;
-  source: string;
-  path: string;
-}
-
 interface TimelinePanelComponentProps {
-  timelineElements: TimelineElementData[];
+  timelineElements: TimelineElement[];
   currentState?: PreviewState;
   activeElementIndices: number[];
   currentEditingElement: number;
@@ -54,7 +44,7 @@ export const TimelinePanelComponent: React.FC<TimelinePanelComponentProps> = ({
       
       <TimelineElementsContainer>
         {timelineElements.map((element, index) => (
-          <TimelineElement
+          <TimelineElementStyled
             key={element.id}
             $isActive={activeElementIndices.includes(index)}
             $isClicked={index === currentEditingElement}
@@ -69,7 +59,7 @@ export const TimelinePanelComponent: React.FC<TimelinePanelComponentProps> = ({
               <ElementText>{element.text}</ElementText>
             </ElementInfo>
             <TypeBadge $type={element.type}>{element.type}</TypeBadge>
-          </TimelineElement>
+          </TimelineElementStyled>
         ))}
       </TimelineElementsContainer>
       
