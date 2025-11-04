@@ -1,12 +1,83 @@
 import React, { useRef, useState, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import styled from 'styled-components';
 import { Preview, PreviewState } from '@creatomate/preview';
 import { processMediaUrlsInJson } from '../../utility/mediaProxy';
 import { cacheExternalAssets, replaceGifUrlsInJson } from '../../utility/cacheAssetHelper';
 import { generateHighlightedText, generateMultipleElementHighlights, findElementRange, findElementRangeByPath, UrlStatus, CurrentElementRange } from '../../utility/urlHighlight';
 import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
+import { TimelinePanelComponent } from '../../components/json-test/TimelinePanelComponent';
+import { ImportModalComponent } from '../../components/json-test/ImportModalComponent';
+import { AssetsModalComponent } from '../../components/json-test/AssetsModalComponent';
+import {
+  Container,
+  Header,
+  BackLink,
+  Title,
+  CreateButton,
+  MainContent,
+  LeftPanel,
+  RightPanel,
+  SectionTitle,
+  ButtonGroup,
+  ExampleButton,
+  CopyApiButton,
+  ImportApiButton,
+  TestImageButton,
+  TestBase64Button,
+  AssetsButton,
+  EditorContainer,
+  JSONTextarea,
+  AutoHighlightOverlay,
+  ClickedHighlightOverlay,
+  UrlHighlightOverlay,
+  PreviewContainer,
+  ErrorMessage,
+  LoadingIndicator,
+  TimelinePanel,
+  TimelinePanelTitle,
+  TimelineElementsContainer,
+  TimelineElement,
+  ElementTime,
+  ElementInfo,
+  ElementType,
+  ElementText,
+  CurrentTimeInfo,
+  ActiveIndicator,
+  AutoJumpHint,
+  TypeBadge,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  CloseModalButton,
+  ModalBody,
+  ModalDescription,
+  ImportTextarea,
+  ModalFooter,
+  CancelButton,
+  ImportButton,
+  AssetsModalContent,
+  AssetsModalBody,
+  AssetsDescription,
+  TypeFilter,
+  FilterButton,
+  AssetsList,
+  AssetItem,
+  AssetInfo,
+  AssetHeader,
+  AssetTypeIcon,
+  AssetName,
+  AssetCategory,
+  AssetDescription,
+  AssetDetails,
+  AssetDetail,
+  AssetUrl,
+  AssetActions,
+  CopyAssetButton,
+  LoadAssetButton,
+  NoAssetsMessage,
+} from '../../components/json-test/JsonTestStyles';
 
 const JSONTest: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
@@ -1669,917 +1740,40 @@ const JSONTest: React.FC = () => {
             {isLoading && <LoadingIndicator>載入中...</LoadingIndicator>}
             
             {/* 時間軸控制面板 */}
-            {previewReady && timelineElements.length > 0 && (
-              <TimelinePanel>
-                <TimelinePanelTitle>
-                  時間軸控制 
-                  <AutoJumpHint>💡 編輯JSON時會自動跳轉</AutoJumpHint>
-                </TimelinePanelTitle>
-                <TimelineElementsContainer>
-                  {timelineElements.map((element, index) => (
-                    <TimelineElement
-                      key={element.id}
-                      $isActive={activeElementIndices.includes(index)}  // 播放中的淡藍背景
-                      $isClicked={index === currentEditingElement}  // 點擊的藍色外框
-                      onClick={() => seekToTime(element.time, index, element.path)}
-                    >
-                      <ActiveIndicator>
-                        {index === currentEditingElement ? '●' : ''}
-                      </ActiveIndicator>
-                      <ElementTime>{element.time}s</ElementTime>
-                      <ElementInfo>
-                        <ElementType>{element.name}</ElementType>
-                        <ElementText>{element.text}</ElementText>
-                      </ElementInfo>
-                      <TypeBadge $type={element.type}>{element.type}</TypeBadge>
-                    </TimelineElement>
-                  ))}
-                </TimelineElementsContainer>
-                
-                {currentState && (
-                  <CurrentTimeInfo>
-                    視頻尺寸: {currentState.width} x {currentState.height}
-                    {currentState.duration && ` | 時長: ${currentState.duration.toFixed(1)}s`}
-                  </CurrentTimeInfo>
-                )}
-              </TimelinePanel>
+            {previewReady && (
+              <TimelinePanelComponent
+                timelineElements={timelineElements}
+                currentState={currentState}
+                activeElementIndices={activeElementIndices}
+                currentEditingElement={currentEditingElement}
+                onSeekToTime={seekToTime}
+              />
             )}
           </RightPanel>
         </MainContent>
 
         {/* 素材列表彈窗 */}
-        {showAssetsModal && (
-          <ModalOverlay onClick={() => setShowAssetsModal(false)}>
-            <AssetsModalContent onClick={(e) => e.stopPropagation()}>
-              <ModalHeader>
-                <ModalTitle>📁 Creatomate 官方素材庫</ModalTitle>
-                <CloseModalButton onClick={() => setShowAssetsModal(false)}>×</CloseModalButton>
-              </ModalHeader>
-              
-              <AssetsModalBody>
-                <AssetsDescription>
-                  以下是經過驗證可以在 Creatomate Preview SDK 中正常使用的官方素材。
-                  點擊「載入」可以自動生成包含該素材的 JSON 模板。
-                </AssetsDescription>
-                
-                {/* 類型篩選器 */}
-                <TypeFilter>
-                  <FilterButton 
-                    $active={selectedAssetType === 'all'}
-                    onClick={() => setSelectedAssetType('all')}
-                  >
-                    🎯 全部
-                  </FilterButton>
-                  {getAllTypes().map(type => (
-                    <FilterButton
-                      key={type}
-                      $active={selectedAssetType === type}
-                      onClick={() => setSelectedAssetType(type)}
-                      style={{ color: TYPE_COLORS[type] }}
-                    >
-                      {TYPE_ICONS[type]} {type.toUpperCase()}
-                    </FilterButton>
-                  ))}
-                </TypeFilter>
-                
-                {/* 素材列表 */}
-                <AssetsList>
-                  {filteredAssets.map(asset => (
-                    <AssetItem key={asset.id}>
-                      <AssetInfo>
-                        <AssetHeader>
-                          <AssetTypeIcon style={{ color: TYPE_COLORS[asset.type] }}>
-                            {TYPE_ICONS[asset.type]}
-                          </AssetTypeIcon>
-                          <AssetName>{asset.name}</AssetName>
-                          <AssetCategory>{asset.category}</AssetCategory>
-                        </AssetHeader>
-                        <AssetDescription>{asset.description}</AssetDescription>
-                        <AssetDetails>
-                          {asset.resolution && <AssetDetail>📐 {asset.resolution}</AssetDetail>}
-                          {asset.duration && <AssetDetail>⏱️ {asset.duration}</AssetDetail>}
-                          {asset.size && <AssetDetail>💾 {asset.size}</AssetDetail>}
-                        </AssetDetails>
-                        <AssetUrl>{asset.url}</AssetUrl>
-                      </AssetInfo>
-                      <AssetActions>
-                        <CopyAssetButton
-                          onClick={() => copyAssetUrl(asset)}
-                          title="複製 URL 到剪貼簿"
-                        >
-                          📋 複製
-                        </CopyAssetButton>
-                        <LoadAssetButton
-                          onClick={() => loadAssetToJson(asset)}
-                          title="載入此素材到 JSON 編輯器"
-                        >
-                          📥 載入
-                        </LoadAssetButton>
-                      </AssetActions>
-                    </AssetItem>
-                  ))}
-                </AssetsList>
-                
-                {filteredAssets.length === 0 && (
-                  <NoAssetsMessage>
-                    沒有找到 {selectedAssetType === 'all' ? '' : selectedAssetType.toUpperCase()} 類型的素材
-                  </NoAssetsMessage>
-                )}
-              </AssetsModalBody>
-            </AssetsModalContent>
-          </ModalOverlay>
-        )}
+        <AssetsModalComponent
+          show={showAssetsModal}
+          selectedType={selectedAssetType}
+          filteredAssets={filteredAssets}
+          onClose={() => setShowAssetsModal(false)}
+          onTypeChange={setSelectedAssetType}
+          onCopyAsset={copyAssetUrl}
+          onLoadAsset={loadAssetToJson}
+        />
 
         {/* 匯入 JSON 請求彈窗 */}
-        {showImportModal && (
-          <ModalOverlay onClick={() => setShowImportModal(false)}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-              <ModalHeader>
-                <ModalTitle>匯入 JSON 請求</ModalTitle>
-                <CloseModalButton onClick={() => setShowImportModal(false)}>×</CloseModalButton>
-              </ModalHeader>
-              <ModalBody>
-                <ModalDescription>
-                  請貼入完整的 API 請求格式 JSON（包含 source 和 output_format）
-                </ModalDescription>
-                <ImportTextarea
-                  value={importJsonInput}
-                  onChange={(e) => setImportJsonInput(e.target.value)}
-                  placeholder={`請貼入如下格式的 JSON：
-{
-  "source": {
-    "outputFormat": "mp4",
-    "width": 1920,
-    "height": 1080,
-    "elements": [...]
-  },
-  "output_format": "mp4"
-}`}
-                />
-              </ModalBody>
-              <ModalFooter>
-                <CancelButton onClick={() => setShowImportModal(false)}>
-                  取消
-                </CancelButton>
-                <ImportButton onClick={handleImportApiRequest}>
-                  匯入
-                </ImportButton>
-              </ModalFooter>
-            </ModalContent>
-          </ModalOverlay>
-        )}
+        <ImportModalComponent
+          show={showImportModal}
+          jsonInput={importJsonInput}
+          onClose={() => setShowImportModal(false)}
+          onImport={handleImportApiRequest}
+          onInputChange={setImportJsonInput}
+        />
       </Container>
     </div>
   );
 };
 
-export default JSONTest;
-
-const Container = styled.div`
-  min-height: 100vh;
-  background: #f5f5f5;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 30px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-`;
-
-const BackLink = styled.div`
-  a {
-    color: #2196f3;
-    text-decoration: none;
-    font-weight: 500;
-    
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-`;
-
-const Title = styled.h1`
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-`;
-
-const CreateButton = styled.button`
-  padding: 12px 24px;
-  background: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  
-  &:hover:not(:disabled) {
-    background: #45a049;
-  }
-  
-  &:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-const MainContent = styled.div`
-  display: flex;
-  height: calc(100vh - 80px);
-`;
-
-const LeftPanel = styled.div`
-  flex: 1;
-  padding: 20px;
-  background: white;
-  border-right: 1px solid #e0e0e0;
-  display: flex;
-  flex-direction: column;
-`;
-
-const RightPanel = styled.div`
-  flex: 1;
-  padding: 20px;
-  background: #f8f9fa;
-  display: flex;
-  flex-direction: column;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: #333;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-`;
-
-const ExampleButton = styled.button`
-  padding: 8px 16px;
-  background: #2196f3;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  
-  &:hover {
-    background: #1976d2;
-  }
-`;
-
-const CopyApiButton = styled.button`
-  padding: 8px 16px;
-  background: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s ease;
-  
-  &:hover {
-    background: #45a049;
-  }
-  
-  &:active {
-    background: #3d8b40;
-  }
-`;
-
-const ImportApiButton = styled.button`
-  padding: 8px 16px;
-  background: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s ease;
-  
-  &:hover {
-    background: #45a049;
-  }
-  
-  &:active {
-    background: #3d8b40;
-  }
-`;
-
-const TestImageButton = styled.button`
-  padding: 8px 16px;
-  background: #ff9800;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s ease;
-  
-  &:hover:not(:disabled) {
-    background: #f57c00;
-  }
-  
-  &:active:not(:disabled) {
-    background: #ef6c00;
-  }
-  
-  &:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-const TestBase64Button = styled.button`
-  padding: 8px 16px;
-  background: #9c27b0;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s ease;
-  
-  &:hover:not(:disabled) {
-    background: #7b1fa2;
-  }
-  
-  &:active:not(:disabled) {
-    background: #6a1b9a;
-  }
-  
-  &:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-const AssetsButton = styled.button`
-  padding: 8px 16px;
-  background: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s ease;
-  
-  &:hover {
-    background: #45a049;
-  }
-  
-  &:active {
-    background: #3d8b40;
-  }
-`;
-
-const EditorContainer = styled.div`
-  position: relative;
-  flex: 1;
-  display: flex;
-`;
-
-const JSONTextarea = styled.textarea`
-  flex: 1;
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  resize: none;
-  outline: none;
-  background: transparent;  /* 讓高亮層可見 */
-  position: relative;
-  z-index: 2;  /* 在高亮層上方 */
-  color: #333;
-  
-  &:focus {
-    border-color: #2196f3;
-  }
-`;
-
-/* 通用 Overlay 樣式 */
-const baseOverlayStyle = `
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 15px;
-  pointer-events: none;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow: hidden;
-  color: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
-`;
-
-/* 層1: 自動播放高亮（淡藍，無邊線）*/
-const AutoHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
-  ${baseOverlayStyle}
-  z-index: 1;
-  
-  .element-block-highlight {
-    display: block;
-    background-color: rgba(33, 150, 243, 0.08);  /* 淡藍背景（被動）*/
-    /* 無左側邊線 */
-  }
-`;
-
-/* 層2: 點擊選中高亮（淡藍，有粗邊線）*/
-const ClickedHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
-  ${baseOverlayStyle}
-  z-index: 2;
-  
-  .element-block-highlight {
-    display: block;
-    background-color: rgba(33, 150, 243, 0.08);  /* 淡藍背景（與被動相同）*/
-    border-left: 4px solid #2196f3;  /* 藍色粗線（主動標記）*/
-  }
-`;
-
-/* 層3: URL 狀態高亮 */
-const UrlHighlightOverlay = styled.div.attrs({ 'data-overlay': true })`
-  ${baseOverlayStyle}
-  z-index: 3;
-`;
-
-const PreviewContainer = styled.div`
-  flex: 1;
-  background: #000;
-  border-radius: 8px;
-  position: relative;
-  min-height: 400px;
-`;
-
-const ErrorMessage = styled.div`
-  color: #f44336;
-  background: #ffebee;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  font-size: 14px;
-`;
-
-const LoadingIndicator = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 600;
-`;
-
-const TimelinePanel = styled.div`
-  margin-top: 20px;
-  padding: 15px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-`;
-
-const TimelinePanelTitle = styled.h3`
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 15px 0;
-  color: #333;
-`;
-
-const TimelineElementsContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 15px;
-`;
-
-const TimelineElement = styled.div<{ $isActive?: boolean; $isClicked?: boolean }>`
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  
-  /* 背景：播放中的元素顯示淡綠 */
-  background: ${props => props.$isActive ? 'rgba(76, 175, 80, 0.12)' : '#f8f9fa'};
-  
-  /* 外框：點擊選中的元素顯示藍色粗框 */
-  border: ${props => 
-    props.$isClicked ? '2px solid #2196f3' :  /* 點擊：藍色粗框 */
-    '1px solid transparent'  /* 其他：無框 */
-  };
-  
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  
-  &:hover {
-    background: ${props => 
-      props.$isClicked ? '#bbdefb' :  /* 點擊的：hover 深藍 */
-      props.$isActive ? 'rgba(76, 175, 80, 0.18)' :  /* 活躍的：hover 深綠 */
-      '#e9ecef'  /* 其他：淺灰 */
-    };
-  }
-`;
-
-const ElementTime = styled.div`
-  min-width: 50px;
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
-  font-weight: 600;
-  color: #2196f3;
-  margin-right: 8px;  /* 時間右側間距 */
-  flex-shrink: 0;
-`;
-
-const ElementInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;  /* 允許文字截斷 */
-`;
-
-const ElementType = styled.div`
-  font-size: 14px;
-  color: #333;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const ElementText = styled.div`
-  font-size: 12px;
-  color: #666;
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-style: italic;
-`;
-
-const CurrentTimeInfo = styled.div`
-  font-size: 14px;
-  color: #666;
-  text-align: center;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  font-family: 'Monaco', 'Menlo', monospace;
-`;
-
-const ActiveIndicator = styled.div`
-  width: 20px;  /* 固定寬度，確保對齊 */
-  color: #2196f3;
-  font-size: 16px;
-  font-weight: bold;
-  text-align: center;
-  animation: pulse 1.5s infinite;
-  flex-shrink: 0;
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-`;
-
-const AutoJumpHint = styled.span`
-  font-size: 12px;
-  color: #666;
-  font-weight: normal;
-  margin-left: 10px;
-`;
-
-const TypeBadge = styled.div<{ $type: string }>`
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
-  white-space: nowrap;
-  background: ${props => {
-    switch (props.$type) {
-      case 'video': return '#ff6b6b';
-      case 'audio': return '#4ecdc4';
-      case 'text': return '#45b7d1';
-      case 'image': return '#f9ca24';
-      case 'composition': return '#6c5ce7';
-      case 'shape': return '#a29bfe';
-      default: return '#74b9ff';
-    }
-  }};
-  color: white;
-  margin-left: auto;  /* 推到最右邊 */
-  margin-right: 10px;
-  align-self: center;
-`;
-
-/* Modal 樣式 */
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
-`;
-
-const ModalTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-`;
-
-const CloseModalButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #666;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  &:hover {
-    color: #333;
-  }
-`;
-
-const ModalBody = styled.div`
-  padding: 24px;
-  flex: 1;
-  overflow-y: auto;
-`;
-
-const ModalDescription = styled.p`
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 16px;
-  line-height: 1.5;
-`;
-
-const ImportTextarea = styled.textarea`
-  width: 100%;
-  height: 300px;
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  resize: vertical;
-  outline: none;
-  
-  &:focus {
-    border-color: #4caf50;
-  }
-`;
-
-const ModalFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 24px;
-  border-top: 1px solid #e0e0e0;
-`;
-
-const CancelButton = styled.button`
-  padding: 10px 20px;
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  
-  &:hover {
-    background: #e0e0e0;
-  }
-`;
-
-const ImportButton = styled.button`
-  padding: 10px 20px;
-  background: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  
-  &:hover {
-    background: #45a049;
-  }
-`;
-
-// 素材彈窗樣式
-const AssetsModalContent = styled(ModalContent)`
-  width: 90vw;
-  max-width: 1000px;
-  height: 80vh;
-  max-height: 600px;
-`;
-
-const AssetsModalBody = styled.div`
-  padding: 20px;
-  height: calc(100% - 60px);
-  overflow-y: auto;
-`;
-
-const AssetsDescription = styled.p`
-  color: #666;
-  margin: 0 0 20px 0;
-  line-height: 1.5;
-  font-size: 14px;
-`;
-
-const TypeFilter = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-`;
-
-const FilterButton = styled.button<{ $active: boolean }>`
-  padding: 6px 12px;
-  border: 1px solid ${props => props.$active ? '#2196f3' : '#ddd'};
-  background: ${props => props.$active ? '#2196f3' : 'white'};
-  color: ${props => props.$active ? 'white' : '#333'};
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    border-color: #2196f3;
-    background: ${props => props.$active ? '#1976d2' : '#f0f8ff'};
-  }
-`;
-
-const AssetsList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const AssetItem = styled.div`
-  display: flex;
-  align-items: flex-start;
-  padding: 16px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: #f0f0f0;
-    border-color: #2196f3;
-  }
-`;
-
-const AssetInfo = styled.div`
-  flex: 1;
-  margin-right: 16px;
-`;
-
-const AssetHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-`;
-
-const AssetTypeIcon = styled.span`
-  font-size: 16px;
-`;
-
-const AssetName = styled.h4`
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-`;
-
-const AssetCategory = styled.span`
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 500;
-`;
-
-const AssetDescription = styled.p`
-  margin: 0 0 8px 0;
-  color: #666;
-  font-size: 14px;
-  line-height: 1.4;
-`;
-
-const AssetDetails = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
-`;
-
-const AssetDetail = styled.span`
-  font-size: 12px;
-  color: #888;
-  background: #f0f0f0;
-  padding: 2px 6px;
-  border-radius: 4px;
-`;
-
-const AssetUrl = styled.div`
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 11px;
-  color: #888;
-  background: #f5f5f5;
-  padding: 4px 8px;
-  border-radius: 4px;
-  word-break: break-all;
-  border: 1px solid #e0e0e0;
-`;
-
-const AssetActions = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const CopyAssetButton = styled.button`
-  padding: 6px 12px;
-  background: #ff9800;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  white-space: nowrap;
-  
-  &:hover {
-    background: #f57c00;
-  }
-`;
-
-const LoadAssetButton = styled.button`
-  padding: 6px 12px;
-  background: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  white-space: nowrap;
-  
-  &:hover {
-    background: #45a049;
-  }
-`;
-
-const NoAssetsMessage = styled.div`
-  text-align: center;
-  color: #888;
-  font-style: italic;
-  padding: 40px 20px;
-`; 
+export default JSONTest; 
