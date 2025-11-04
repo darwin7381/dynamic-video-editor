@@ -1683,13 +1683,15 @@ const JSONTest: React.FC = () => {
                       $isClicked={index === currentEditingElement}  // 點擊的藍色外框
                       onClick={() => seekToTime(element.time, index, element.path)}
                     >
+                      <ActiveIndicator>
+                        {index === currentEditingElement ? '●' : ''}
+                      </ActiveIndicator>
                       <ElementTime>{element.time}s</ElementTime>
                       <ElementInfo>
                         <ElementType>{element.name}</ElementType>
                         <ElementText>{element.text}</ElementText>
                       </ElementInfo>
                       <TypeBadge $type={element.type}>{element.type}</TypeBadge>
-                      {index === currentEditingElement && <ActiveIndicator>●</ActiveIndicator>}
                     </TimelineElement>
                   ))}
                 </TimelineElementsContainer>
@@ -2200,13 +2202,15 @@ const ElementTime = styled.div`
   font-size: 14px;
   font-weight: 600;
   color: #2196f3;
+  margin-right: 8px;  /* 時間右側間距 */
+  flex-shrink: 0;
 `;
 
 const ElementInfo = styled.div`
-  margin-left: 15px;
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;  /* 允許文字截斷 */
 `;
 
 const ElementType = styled.div`
@@ -2239,12 +2243,13 @@ const CurrentTimeInfo = styled.div`
 `;
 
 const ActiveIndicator = styled.div`
-  position: absolute;
-  right: 10px;
+  width: 20px;  /* 固定寬度，確保對齊 */
   color: #2196f3;
   font-size: 16px;
   font-weight: bold;
+  text-align: center;
   animation: pulse 1.5s infinite;
+  flex-shrink: 0;
   
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -2278,8 +2283,8 @@ const TypeBadge = styled.div<{ $type: string }>`
     }
   }};
   color: white;
-  margin-left: auto;
-  margin-right: 35px; /* 為 ActiveIndicator 留出空間 */
+  margin-left: auto;  /* 推到最右邊 */
+  margin-right: 10px;
   align-self: center;
 `;
 
