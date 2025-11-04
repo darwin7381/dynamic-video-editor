@@ -1,0 +1,48 @@
+{
+  "output_format": "mp4",
+  "width": 1280,
+  "height": 720,
+  "duration": "6s",
+  "elements": [
+    {
+      "type": "text",
+      "text": "第一段文字",
+      "font_family": "Arial",
+      "font_size": "48px",
+      "fill_color": "#ffffff",
+      "x": "50%",
+      "y": "40%",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "time": "0s",
+      "duration": "2s"
+    },
+    {
+      "type": "text",
+      "text": "第二段文字",
+      "font_family": "Arial",
+      "font_size": "48px",
+      "fill_color": "#ffff00",
+      "x": "50%",
+      "y": "60%",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "time": "2s",
+      "duration": "2s"
+    },
+    {
+      "type": "text",
+      "text": "第三段文字",
+      "font_family": "Arial",
+      "font_size": "48px",
+      "fill_color": "#ff6600",
+      "x": "50%",
+      "y": "50%",
+      "x_alignment": "50%",
+      "y_alignment": "50%",
+      "time": "4s",
+      "duration": "2s"
+    }
+  ]
+}
+

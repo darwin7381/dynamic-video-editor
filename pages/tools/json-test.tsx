@@ -7,14 +7,18 @@ import { generateHighlightedText, generateMultipleElementHighlights, findElement
 import { convertToSnakeCase, parseTime, estimateDuration } from '../../utility/jsonHelpers';
 import { parseTimelineElements, TimelineElement } from '../../utility/timelineParser';
 import { detectCurrentElement } from '../../utility/elementDetector';
+import { generateAssetTemplate } from '../../utility/jsonTemplates';
+import { convertToApiRequest, extractFromApiRequest, showCopyFeedback } from '../../utility/apiRequestHelpers';
 import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
 import { TimelinePanelComponent } from '../../components/json-test/TimelinePanelComponent';
 import { ImportModalComponent } from '../../components/json-test/ImportModalComponent';
 import { AssetsModalComponent } from '../../components/json-test/AssetsModalComponent';
-import { JSON_EXAMPLES } from '../../data/json-examples';
+import { JSON_EXAMPLES, DEFAULT_JSON } from '../../data/json-examples';
 import { usePreviewManager } from '../../hooks/usePreviewManager';
 import { useTimeline } from '../../hooks/useTimeline';
 import { useJsonProcessor } from '../../hooks/useJsonProcessor';
+import { useAssetManager } from '../../hooks/useAssetManager';
+import { useImportExport } from '../../hooks/useImportExport';
 import {
   Container,
   Header,
@@ -86,57 +90,7 @@ import {
 } from '../../components/json-test/JsonTestStyles';
 
 const JSONTest: React.FC = () => {
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importJsonInput, setImportJsonInput] = useState('');
-  const [showAssetsModal, setShowAssetsModal] = useState(false);
-  const [selectedAssetType, setSelectedAssetType] = useState<'all' | CreatomateAsset['type']>('all');
-  const [jsonInput, setJsonInput] = useState(`{
-  "output_format": "mp4",
-  "width": 1280,
-  "height": 720,
-  "duration": "6s",
-  "elements": [
-    {
-      "type": "text",
-      "text": "第一段文字",
-      "font_family": "Arial",
-      "font_size": "48px",
-      "fill_color": "#ffffff",
-      "x": "50%",
-      "y": "40%",
-      "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "0s",
-      "duration": "2s"
-    },
-    {
-      "type": "text",
-      "text": "第二段文字",
-      "font_family": "Arial",
-      "font_size": "48px",
-      "fill_color": "#ffff00",
-      "x": "50%",
-      "y": "60%",
-      "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "2s",
-      "duration": "2s"
-    },
-    {
-      "type": "text",
-      "text": "第三段文字",
-      "font_family": "Arial",
-      "font_size": "48px",
-      "fill_color": "#ff6600",
-      "x": "50%",
-      "y": "50%",
-      "x_alignment": "50%",
-      "y_alignment": "50%",
-      "time": "4s",
-      "duration": "2s"
-    }
-  ]
-}`);
+  const [jsonInput, setJsonInput] = useState(DEFAULT_JSON);
 
   const [previewReady, setPreviewReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -171,6 +125,28 @@ const JSONTest: React.FC = () => {
   const cursorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const timelineElementsRef = useRef<TimelineElement[]>([]);
   const jsonInputRef = useRef<string>('');
+
+  // 🎯 使用 Asset Manager Hook
+  const {
+    showAssetsModal,
+    setShowAssetsModal,
+    selectedAssetType,
+    setSelectedAssetType,
+    filteredAssets,
+    copyAssetUrl,
+    loadAssetToJson,
+  } = useAssetManager({ setJsonInput, setError, error });
+
+  // 🎯 使用 Import/Export Hook
+  const {
+    showImportModal,
+    setShowImportModal,
+    importJsonInput,
+    setImportJsonInput,
+    copyApiRequest,
+    openImportModal,
+    handleImportApiRequest,
+  } = useImportExport({ jsonInput, setJsonInput, setError });
 
   // 🔄 處理時間變化（獨立函數，可訪問最新 state）
   const handleTimeChange = useCallback((time: number) => {
@@ -357,65 +333,6 @@ const JSONTest: React.FC = () => {
       setError(`預覽初始化失敗: ${err instanceof Error ? err.message : '未知錯誤'}`);
     }
   }, [jsonInput, handleTimeChange, parseTimelineElements]);
-
-  // 複製素材 URL 到剪貼簿
-  const copyAssetUrl = async (asset: CreatomateAsset) => {
-    try {
-      await navigator.clipboard.writeText(asset.url);
-      setError(null);
-      // 顯示成功訊息
-      const originalError = error;
-      setError(`✅ 已複製：${asset.name}`);
-      setTimeout(() => setError(originalError), 2000);
-    } catch (err) {
-      setError('複製失敗，請手動複製');
-    }
-  };
-
-  // 載入素材到 JSON 編輯器
-  const loadAssetToJson = (asset: CreatomateAsset) => {
-    const assetJson = `{
-  "output_format": "mp4",
-  "width": 1920,
-  "height": 1080,
-  "fill_color": "#000000",
-  "elements": [
-    {
-      "type": "${asset.type === 'gif' ? 'image' : asset.type}",
-      "source": "${asset.url}",
-      ${asset.type === 'image' || asset.type === 'gif' ? '"fit": "cover",' : ''}
-      "time": "0 s",
-      "duration": "${asset.duration || '4 s'}"
-    },
-    {
-      "type": "text",
-      "name": "title",
-      "text": "${asset.name}",
-      "font_family": "Noto Sans TC",
-      "font_size": "6 vh",
-      "font_weight": "700",
-      "fill_color": "#FFFFFF",
-      "x_alignment": "50%",
-      "y_alignment": "50%",
-      "y": "20%",
-      "width": "80%",
-      "background_color": "rgba(0,0,0,0.7)",
-      "time": "0.5 s",
-      "duration": "3 s"
-    }
-  ]
-}`;
-    
-    setJsonInput(assetJson);
-    setShowAssetsModal(false);
-    
-    // 即時更新 useEffect 會自動處理載入
-  };
-
-  // 獲取篩選後的素材列表
-  const filteredAssets = selectedAssetType === 'all' 
-    ? CREATOMATE_ASSETS 
-    : getAssetsByType(selectedAssetType);
 
   // JSON改變時的即時更新（手動觸發）
   React.useEffect(() => {
@@ -608,96 +525,6 @@ const JSONTest: React.FC = () => {
     }
   };
 
-  // 複製 API 請求格式 - 完全按照用戶提供的範例格式
-  const copyApiRequest = async () => {
-    try {
-      // 解析當前的 JSON 輸入
-      const inputSource = JSON.parse(jsonInput);
-      
-      // 完全按照你的範例格式包裝成 API 請求格式
-      // 你的範例: {"source": {"outputFormat": "mp4", ...}, "output_format": "mp4"}
-      const apiRequest = {
-        source: inputSource,  // 直接使用輸入的 JSON 作為 source
-        output_format: inputSource.output_format || "mp4"
-      };
-      
-      // 轉換為 JSON 字符串
-      const apiRequestString = JSON.stringify(apiRequest, null, 2);
-      
-      // 複製到剪貼板
-      await navigator.clipboard.writeText(apiRequestString);
-      
-      // 顯示成功消息
-      console.log('API 請求已複製到剪貼板');
-      
-      // 視覺反饋
-      const button = document.querySelector('[data-copy-api-button]') as HTMLButtonElement;
-      if (button) {
-        const originalText = button.textContent;
-        button.textContent = '已複製！';
-        button.style.background = '#45a049';
-        setTimeout(() => {
-          button.textContent = originalText;
-          button.style.background = '#4caf50';
-        }, 2000);
-      }
-      
-    } catch (err) {
-      console.error('複製 API 請求失敗:', err);
-      if (err instanceof SyntaxError) {
-        setError('JSON 格式錯誤，無法複製 API 請求');
-      } else {
-        setError('複製失敗，請重試');
-      }
-    }
-  };
-
-  // 匯入 JSON 請求格式
-  const importApiRequest = () => {
-    setShowImportModal(true);
-    setImportJsonInput('');
-  };
-
-  // 處理匯入 JSON 請求
-  const handleImportApiRequest = () => {
-    try {
-      // 解析輸入的 API 請求 JSON
-      const apiRequest = JSON.parse(importJsonInput);
-      
-      // 檢查是否包含 source 字段
-      if (!apiRequest.source) {
-        setError('匯入失敗：JSON 格式不正確，缺少 source 字段');
-        return;
-      }
-      
-      // 提取 source 部分
-      const sourceJson = apiRequest.source;
-      
-      // 轉換為編輯器格式的 JSON 字符串
-      const editorJsonString = JSON.stringify(sourceJson, null, 2);
-      
-      // 更新編輯器內容
-      setJsonInput(editorJsonString);
-      
-      // 關閉彈窗
-      setShowImportModal(false);
-      setImportJsonInput('');
-      
-      // 清除錯誤
-      setError(null);
-      
-      console.log('API 請求已成功匯入到編輯器');
-      
-    } catch (err) {
-      console.error('匯入 API 請求失敗:', err);
-      if (err instanceof SyntaxError) {
-        setError('JSON 語法錯誤，請檢查輸入格式');
-      } else {
-        setError('匯入失敗，請重試');
-      }
-    }
-  };
-
   // 使用 import 的示例
   const examples = JSON_EXAMPLES;
 
@@ -738,7 +565,7 @@ const JSONTest: React.FC = () => {
                 複製 api 請求
               </CopyApiButton>
               <ImportApiButton
-                onClick={importApiRequest}
+                onClick={openImportModal}
               >
                 匯入 JSON 請求
               </ImportApiButton>

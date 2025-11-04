@@ -5,6 +5,7 @@
  * 使用時只需要 import 這個檔案，就可以取得所有示例。
  */
 
+import defaultSimpleExample from './00-default-simple.json';
 import welcomeExample from './01-welcome-example.json';
 import imageSlideshowExample from './02-image-slideshow.json';
 import professionalVideoExample from './03-professional-video.json';
@@ -32,6 +33,12 @@ export const JSON_EXAMPLES: JsonExample[] = [
     json: JSON.stringify(professionalVideoExample, null, 2),
   },
 ];
+
+/**
+ * 默認的初始 JSON
+ * 用於頁面首次載入時的默認內容
+ */
+export const DEFAULT_JSON = JSON.stringify(defaultSimpleExample, null, 2);
 
 export default JSON_EXAMPLES;
 
