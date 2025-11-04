@@ -27,15 +27,20 @@ export function extractMediaUrlsWithType(obj: any, medias: MediaInfo[] = []): Me
     return medias;
   }
 
-  // 檢查是否為包含 source 的元素
-  if (obj.source && typeof obj.source === 'string' && isExternalUrl(obj.source)) {
+  // 🔧 只處理有效的媒體元素類型
+  const validMediaTypes = ['image', 'video', 'audio'];
+  
+  // 檢查是否為有效的媒體元素
+  if (obj.type && validMediaTypes.includes(obj.type) && 
+      obj.source && typeof obj.source === 'string' && 
+      isExternalUrl(obj.source)) {
     medias.push({
       url: obj.source,
-      type: obj.type  // 'image', 'video', 'audio' 等
+      type: obj.type
     });
   }
 
-  // 遞迴處理嵌套物件
+  // 遞迴處理嵌套物件（包括 composition 的 elements）
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'object') {
       extractMediaUrlsWithType(value, medias);

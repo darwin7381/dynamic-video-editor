@@ -95,7 +95,8 @@ const JSONTest: React.FC = () => {
   React.useEffect(() => {
     jsonInputRef.current = jsonInput;
   }, [jsonInput]);
-  const [currentEditingElement, setCurrentEditingElement] = useState<number>(-1);
+  const [currentEditingElement, setCurrentEditingElement] = useState<number>(-1);  // 點擊選中（單個）
+  const [activeElementIndices, setActiveElementIndices] = useState<number[]>([]);  // 播放中的活躍元素（多個）
   const previewRef = useRef<Preview>();
   const previewContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -294,10 +295,17 @@ const JSONTest: React.FC = () => {
     
     if (!elements || elements.length === 0) return;
     
-    // 找到所有活躍元素
+    // 找到所有活躍元素（排除 composition，只要具體的媒體元素）
     const activeElements = elements
       .map((el, index) => ({ el, index }))
-      .filter(({ el }) => time >= el.time && time < (el.time + el.duration));
+      .filter(({ el }) => {
+        // 檢查時間範圍
+        const inTimeRange = time >= el.time && time < (el.time + el.duration);
+        // 排除 composition（只要子元素）
+        const isNotComposition = el.type !== 'composition';
+        
+        return inTimeRange && isNotComposition;
+      });
     
     if (activeElements.length > 0) {
       // 收集所有活躍元素的範圍（使用 path 精確定位）
@@ -317,11 +325,12 @@ const JSONTest: React.FC = () => {
       // 設定所有範圍為自動高亮
       setAutoHighlightRanges(ranges);
       
-      // 設定主要元素（用於時間軸高亮）
-      const primary = activeElements[activeElements.length - 1];
-      setCurrentEditingElement(primary.index);
+      // 🔧 設定所有活躍元素的索引（用於時間軸多選背景）
+      const indices = activeElements.map(a => a.index);
+      setActiveElementIndices(indices);
     } else {
       setAutoHighlightRanges([]);
+      setActiveElementIndices([]);
     }
   }, [timelineElements, jsonInput]);
   
@@ -1670,7 +1679,8 @@ const JSONTest: React.FC = () => {
                   {timelineElements.map((element, index) => (
                     <TimelineElement
                       key={element.id}
-                      $isActive={index === currentEditingElement}
+                      $isActive={activeElementIndices.includes(index)}  // 播放中的淡藍背景
+                      $isClicked={index === currentEditingElement}  // 點擊的藍色外框
                       onClick={() => seekToTime(element.time, index, element.path)}
                     >
                       <ElementTime>{element.time}s</ElementTime>
@@ -2156,19 +2166,31 @@ const TimelineElementsContainer = styled.div`
   margin-bottom: 15px;
 `;
 
-const TimelineElement = styled.div<{ $isActive?: boolean }>`
+const TimelineElement = styled.div<{ $isActive?: boolean; $isClicked?: boolean }>`
   display: flex;
   align-items: center;
   padding: 10px;
-  background: ${props => props.$isActive ? '#e3f2fd' : '#f8f9fa'};
-  border: ${props => props.$isActive ? '2px solid #2196f3' : '1px solid transparent'};
+  
+  /* 背景：播放中的元素顯示淡綠 */
+  background: ${props => props.$isActive ? 'rgba(76, 175, 80, 0.12)' : '#f8f9fa'};
+  
+  /* 外框：點擊選中的元素顯示藍色粗框 */
+  border: ${props => 
+    props.$isClicked ? '2px solid #2196f3' :  /* 點擊：藍色粗框 */
+    '1px solid transparent'  /* 其他：無框 */
+  };
+  
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
   
   &:hover {
-    background: ${props => props.$isActive ? '#bbdefb' : '#e9ecef'};
+    background: ${props => 
+      props.$isClicked ? '#bbdefb' :  /* 點擊的：hover 深藍 */
+      props.$isActive ? 'rgba(76, 175, 80, 0.18)' :  /* 活躍的：hover 深綠 */
+      '#e9ecef'  /* 其他：淺灰 */
+    };
   }
 `;
 
