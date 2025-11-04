@@ -17,9 +17,16 @@
 1. **[完整解決方案總結](./COMPLETE_SOLUTION_SUMMARY.md)** ⭐⭐⭐ **必讀**
    - 4 天問題解決完整記錄
    - 所有方案的測試結果
-   - 當前狀態：95% 完成
+   - 當前狀態：99% 完成 ✅
    - 包含效能分析和使用指南
+   - 最新：四層高亮系統、時間軸複數選中
    - 適合：所有開發者
+
+1.5 **[近期改進記錄](./RECENT_IMPROVEMENTS_LOG.md)** ⭐⭐ **最新動態**
+   - 10/29-11/02 完整改進記錄
+   - 關鍵突破點分析
+   - 技術創新總結
+   - 適合：想了解演進過程的開發者
 
 2. **[研究驗證總結報告](./research-verification-summary.md)** ⭐ **技術驗證**
    - 完整驗證另一個 AI 的研究發現
@@ -41,7 +48,14 @@
    - 最終解決方案
    - 適合：遇到外部素材載入問題的開發者
 
-5. **[cacheAsset 深度調查](./cacheasset-investigation.md)**
+5. **[JSON 測試工具完整指南](./JSON_TEST_TOOL_GUIDE.md)** ⭐⭐ **功能詳解**
+   - JSON 編輯器完整機制
+   - 中間處理層架構
+   - Path 定位系統
+   - 三向聯動原理
+   - 適合：深入理解工具運作的開發者
+
+6. **[cacheAsset 深度調查](./cacheasset-investigation.md)**
    - cacheAsset API 實驗報告
    - Blob 測試與比對
    - iframe 行為分析
@@ -49,7 +63,7 @@
 
 ### 📋 API 參考
 
-6. **[Creatomate API 知識庫](./creatomate-api-knowledge.md)**
+7. **[Creatomate API 知識庫](./creatomate-api-knowledge.md)**
    - API 請求格式
    - 命名規則說明
    - 官方範例學習
@@ -57,20 +71,20 @@
 
 ### 🔄 技術選型
 
-7. **[影片編輯框架評估](./video-editing-frameworks-evaluation.md)**
+8. **[影片編輯框架評估](./video-editing-frameworks-evaluation.md)**
    - Creatomate vs Remotion vs FFmpeg
    - 各框架優缺點比較
    - 適合：考慮替代方案的開發者
 
 ### ⚙️ 設定指南
 
-8. **[CloudConvert 設定指南](./convertapi-setup.md)**
+9. **[CloudConvert 設定指南](./convertapi-setup.md)**
    - GIF 轉 MP4 服務設定
    - API Key 取得方式
    - 免費額度：25次/天
    - 適合：需要 GIF 動畫預覽的開發者
 
-9. **[Cloudflare R2 CORS 設定](./cloudflare-r2-cors-setup.md)**
+10. **[Cloudflare R2 CORS 設定](./cloudflare-r2-cors-setup.md)**
    - R2 CORS 政策設定
    - 常見問題排查
    - 適合：使用 R2 儲存素材的開發者

@@ -627,6 +627,39 @@ const results = await Promise.all(processingPromises);
 
 **詳細文檔**：`URL_HIGHLIGHT_IMPLEMENTATION.md`
 
+**最新更新**（2025-11-02）：
+- ✅ 四層 Overlay 架構
+- ✅ 雙向聯動（JSON ⇄ 預覽 ⇄ 時間軸）
+- ✅ 多元素同時高亮
+- ✅ Composition 精確定位
+- ✅ 主動/被動狀態分離
+
+---
+
+### ✅ 時間軸複數選中（2025-11-02 更新）
+
+**問題**：
+- 同一時間有多個元素活躍
+- 時間軸只能高亮一個
+
+**解決方案**：
+```typescript
+// State 分離
+const [activeElementIndices, setActiveElementIndices] = useState<number[]>([]);  // 播放中（多個）
+const [currentEditingElement, setCurrentEditingElement] = useState<number>(-1);  // 點擊（單個）
+
+// 渲染
+<TimelineElement
+  $isActive={activeElementIndices.includes(index)}  // 淡綠背景
+  $isClicked={index === currentEditingElement}  // 藍色外框
+/>
+```
+
+**視覺效果**：
+- 🟢 播放中的元素：淡綠背景
+- 💙 點擊的元素：藍色外框 + 藍點
+- 可疊加：播放中 + 點擊 = 淡綠背景 + 藍框
+
 ---
 
 ### 短期可優化
