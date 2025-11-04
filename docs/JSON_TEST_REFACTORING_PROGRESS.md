@@ -77,6 +77,35 @@
 
 ---
 
+### 階段 3.5：拆分 JSON 示例（已完成 ✓）
+
+**完成時間：** 2025-11-04
+
+**成果：**
+- ✅ 創建 `data/json-examples/` 目錄
+- ✅ 提取示例 1：歡迎示例（99 行）
+- ✅ 提取示例 2：圖片輪播（75 行）
+- ✅ 提取示例 3：專業視頻（87 行）
+- ✅ 創建示例索引檔案（37 行）
+- ✅ 在主檔案中替換為 import
+- ✅ 編譯測試通過
+
+**檔案變化：**
+- `pages/tools/json-test.tsx`: 1778 → 1512 行（-14.9%，相比原始 -41.5%）
+- 新增：`01-welcome-example.json`: 99 行
+- 新增：`02-image-slideshow.json`: 75 行
+- 新增：`03-professional-video.json`: 87 行
+- 新增：`index.ts`: 37 行
+
+**結構優勢：**
+1. **一個示例一個檔案** - 清晰易管理
+2. **JSON 格式** - 標準格式，易於編輯和驗證
+3. **索引檔案** - 統一管理所有示例
+4. **型別定義** - `JsonExample` 介面確保一致性
+5. **易於擴展** - 新增示例只需加一個 JSON 檔案
+
+---
+
 ## 📝 待辦事項（按優先級排序）
 
 ### 階段 2：拆分工具函數（待執行）
@@ -86,13 +115,7 @@
 **任務清單：**
 - [ ] 創建 `utils/jsonTestHelpers.ts`
 - [ ] 提取 `parseTimelineElements` 函數（~180 行）
-  - 時間軸元素解析邏輯
-  - 支援 composition 嵌套結構
-  - 自動時間軸計算
 - [ ] 提取 `detectCurrentElement` 函數（~190 行）
-  - 光標位置檢測
-  - JSON 元素邊界解析
-  - 時間軸索引匹配
 - [ ] 提取 `convertToSnakeCase` 函數（出現 4 次，可共用）
 - [ ] 提取 `parseTime` 函數（時間字符串解析）
 - [ ] 提取 `estimateDuration` 函數（持續時間估算）
@@ -113,9 +136,9 @@
 **預計減少：** ~400-500 行
 
 #### 3.1 TimelinePanel 組件
-- [ ] 創建 `components/json-test/TimelinePanel.tsx`
-- [ ] 提取時間軸面板 JSX（~100 行）
-- [ ] 定義 Props 介面
+- [x] 創建 `components/json-test/TimelinePanel.tsx`
+- [x] 提取時間軸面板 JSX（~100 行）
+- [x] 定義 Props 介面
   ```typescript
   interface TimelinePanelProps {
     timelineElements: TimelineElement[];
@@ -125,12 +148,12 @@
     onSeekToTime: (time: number, index: number, path: string) => void;
   }
   ```
-- [ ] 測試時間軸互動功能
+- [x] 測試時間軸互動功能
 
 #### 3.2 ImportModal 組件
-- [ ] 創建 `components/json-test/ImportModal.tsx`
-- [ ] 提取匯入彈窗 JSX（~50 行）
-- [ ] 定義 Props 介面
+- [x] 創建 `components/json-test/ImportModal.tsx`
+- [x] 提取匯入彈窗 JSX（~50 行）
+- [x] 定義 Props 介面
   ```typescript
   interface ImportModalProps {
     show: boolean;
@@ -140,12 +163,12 @@
     onInputChange: (value: string) => void;
   }
   ```
-- [ ] 測試匯入功能
+- [x] 測試匯入功能
 
 #### 3.3 AssetsModal 組件
-- [ ] 創建 `components/json-test/AssetsModal.tsx`
-- [ ] 提取素材彈窗 JSX（~100 行）
-- [ ] 定義 Props 介面
+- [x] 創建 `components/json-test/AssetsModal.tsx`
+- [x] 提取素材彈窗 JSX（~100 行）
+- [x] 定義 Props 介面
   ```typescript
   interface AssetsModalProps {
     show: boolean;
@@ -157,10 +180,10 @@
     onLoadAsset: (asset: CreatomateAsset) => void;
   }
   ```
-- [ ] 測試素材選擇功能
+- [x] 測試素材選擇功能
 
 #### 3.4 JsonEditor 組件（可選）
-- [ ] 創建 `components/json-test/JsonEditor.tsx`
+- [ ] 創建 `components/json-test/JsonEditor.tsx`（跳過，暫不拆分）
 - [ ] 提取 JSON 編輯器 + 高亮層 JSX（~80 行）
 - [ ] 整合三層高亮系統
 - [ ] 測試編輯和高亮功能
@@ -310,6 +333,7 @@ pages/tools/json-test.tsx (~600-700 行)
 |------|----------|----------|------|------|
 | 階段 1：樣式拆分 | 2025-11-04 | 2025-11-04 | ~20 分鐘 | ✅ 完成 |
 | 階段 3：子組件 | 2025-11-04 | 2025-11-04 | ~25 分鐘 | ✅ 完成 |
+| 階段 3.5：JSON 示例 | 2025-11-04 | 2025-11-04 | ~15 分鐘 | ✅ 完成 |
 | 階段 2：工具函數 | - | - | - | 待執行 |
 | 階段 4：Hooks | - | - | - | 待執行 |
 | 階段 5：最終優化 | - | - | - | 待執行 |

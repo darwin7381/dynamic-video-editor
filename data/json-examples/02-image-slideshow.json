@@ -1,0 +1,75 @@
+{
+  "outputFormat": "mp4",
+  "width": 1920,
+  "height": 1080,
+  "fillColor": "#000000",
+  "elements": [
+    {
+      "type": "image",
+      "source": "https://creatomate-static.s3.amazonaws.com/demo/image1.jpg",
+      "fit": "cover",
+      "time": "0 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "name": "title",
+      "text": "圖片展示範例",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y": "20%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "0.5 s",
+      "duration": "3 s"
+    },
+    {
+      "type": "image",
+      "source": "https://creatomate-static.s3.amazonaws.com/demo/harshil-gudka-77zGnfU_SFU-unsplash.jpg",
+      "fit": "cover",
+      "time": "4 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "name": "subtitle",
+      "text": "第二張圖片",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y": "20%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "4.5 s",
+      "duration": "3 s"
+    },
+    {
+      "type": "image",
+      "source": "https://creatomate-static.s3.amazonaws.com/demo/samuel-ferrara-1527pjeb6jg-unsplash.jpg",
+      "fit": "cover",
+      "time": "8 s",
+      "duration": "4 s"
+    },
+    {
+      "type": "text",
+      "name": "ending",
+      "text": "感謝觀看",
+      "font_family": "Noto Sans TC",
+      "font_size": "6 vh",
+      "font_weight": "700",
+      "fill_color": "#FFFFFF",
+      "x_alignment": "50%",
+      "y": "50%",
+      "width": "80%",
+      "background_color": "rgba(0,0,0,0.7)",
+      "time": "8.5 s",
+      "duration": "3 s"
+    }
+  ]
+}
+
