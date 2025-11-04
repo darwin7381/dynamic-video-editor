@@ -76,12 +76,17 @@
 - [x] 創建 git 分支
 - [x] 記錄當前狀態
 
-### 階段 2：提取 Styled Components
-- [ ] 創建 styles 目錄
-- [ ] 提取所有 styled components
+### 階段 2：提取 Styled Components（已暫停）
+- [x] 創建 styles 目錄
+- [x] 提取基礎結構
+- [ ] 完整提取所有 styled components（待繼續）
 - [ ] 更新 imports
 - [ ] 測試所有樣式
 - [ ] Git commit
+
+**狀態**：已創建 refactor/split-json-test-component 分支並保存進度
+**決定**：暫時保持 main 分支現狀，功能已完整穩定
+**未來**：可隨時切換到 refactor 分支繼續
 
 ### 階段 3：提取工具函數
 - [ ] 創建 utils 目錄
