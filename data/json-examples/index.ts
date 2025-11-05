@@ -40,7 +40,7 @@ export const JSON_EXAMPLES: JsonExample[] = context
     
     return true;
   })
-  .map((key: string) => {
+  .map((key: string): JsonExample => {
     const fileName = key.replace('./', '');
     const jsonData = context(key);
     const name = fileName.replace('.json', '');
@@ -53,7 +53,7 @@ export const JSON_EXAMPLES: JsonExample[] = context
       json: JSON.stringify(jsonData, null, 2),
     };
   })
-  .sort((a, b) => a.fileName.localeCompare(b.fileName));
+  .sort((a: JsonExample, b: JsonExample) => a.fileName.localeCompare(b.fileName));
 
 console.log(`📊 總共 ${JSON_EXAMPLES.length} 個示例:`, JSON_EXAMPLES.map(e => e.name));
 
