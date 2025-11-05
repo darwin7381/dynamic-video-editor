@@ -13,6 +13,7 @@ import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLOR
 import { TimelinePanelComponent } from '../../components/json-test/TimelinePanelComponent';
 import { ImportModalComponent } from '../../components/json-test/ImportModalComponent';
 import { AssetsModalComponent } from '../../components/json-test/AssetsModalComponent';
+import { ExampleDropdown } from '../../components/json-test/ExampleDropdown';
 import { JSON_EXAMPLES, DEFAULT_JSON } from '../../data/json-examples';
 import { usePreviewManager } from '../../hooks/usePreviewManager';
 import { useTimeline } from '../../hooks/useTimeline';
@@ -487,11 +488,6 @@ const JSONTest: React.FC = () => {
     };
   }, []);
 
-  // 載入示例 JSON
-  const loadExample = (exampleJson: string) => {
-    setJsonInput(exampleJson);
-  };
-
   // 創建視頻
   const createVideo = async () => {
     if (!previewRef.current) return;
@@ -550,14 +546,15 @@ const JSONTest: React.FC = () => {
           <LeftPanel>
             <SectionTitle>JSON 腳本</SectionTitle>
             <ButtonGroup>
-              {examples.map((example, index) => (
-                <ExampleButton
-                  key={index}
-                  onClick={() => loadExample(example.json)}
-                >
-                  {example.name}
-                </ExampleButton>
-              ))}
+              <ExampleButton onClick={() => setJsonInput(DEFAULT_JSON)}>
+                載入示例
+              </ExampleButton>
+              
+              <ExampleDropdown
+                examples={examples}
+                onSelectExample={(json) => setJsonInput(json)}
+              />
+              
               <CopyApiButton
                 data-copy-api-button
                 onClick={copyApiRequest}

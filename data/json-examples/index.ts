@@ -1,44 +1,60 @@
 /**
  * JSON 示例索引
  * 
- * 這個檔案管理所有的 JSON 示例，每個示例都是一個獨立的檔案。
- * 使用時只需要 import 這個檔案，就可以取得所有示例。
+ * 自動載入所有 .json 檔案
  */
 
 import defaultSimpleExample from './00-default-simple.json';
-import welcomeExample from './01-welcome-example.json';
-import imageSlideshowExample from './02-image-slideshow.json';
-import professionalVideoExample from './03-professional-video.json';
 
 export interface JsonExample {
   name: string;
-  description: string;
+  fileName: string;
   json: string;
 }
 
-export const JSON_EXAMPLES: JsonExample[] = [
-  {
-    name: '載入示例',
-    description: '展示基本的視頻 + 字幕功能',
-    json: JSON.stringify(welcomeExample, null, 2),
-  },
-  {
-    name: '從文件載入',
-    description: '圖片輪播與文字說明',
-    json: JSON.stringify(imageSlideshowExample, null, 2),
-  },
-  {
-    name: '載入新的JSON',
-    description: '專業視頻編輯工具展示',
-    json: JSON.stringify(professionalVideoExample, null, 2),
-  },
-];
-
 /**
  * 默認的初始 JSON
- * 用於頁面首次載入時的默認內容
  */
 export const DEFAULT_JSON = JSON.stringify(defaultSimpleExample, null, 2);
 
-export default JSON_EXAMPLES;
+/**
+ * 自動載入所有 JSON 示例檔案
+ */
+// @ts-ignore - webpack require.context
+const context = require.context('./', false, /\.json$/);
 
+export const JSON_EXAMPLES: JsonExample[] = context
+  .keys()
+  .filter((key: string) => {
+    // 只保留以 ./ 開頭的（排除絕對路徑）
+    if (!key.startsWith('./')) {
+      console.log(`⏭️ 跳過絕對路徑: ${key}`);
+      return false;
+    }
+    
+    // 排除 00-default-simple.json
+    if (key === './00-default-simple.json') {
+      console.log(`⏭️ 跳過默認示例: ${key}`);
+      return false;
+    }
+    
+    return true;
+  })
+  .map((key: string) => {
+    const fileName = key.replace('./', '');
+    const jsonData = context(key);
+    const name = fileName.replace('.json', '');
+    
+    console.log(`✅ 載入示例: ${name}`);
+    
+    return {
+      name,
+      fileName,
+      json: JSON.stringify(jsonData, null, 2),
+    };
+  })
+  .sort((a, b) => a.fileName.localeCompare(b.fileName));
+
+console.log(`📊 總共 ${JSON_EXAMPLES.length} 個示例:`, JSON_EXAMPLES.map(e => e.name));
+
+export default JSON_EXAMPLES;
