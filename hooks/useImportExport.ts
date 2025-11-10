@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { convertToApiRequest, extractFromApiRequest, showCopyFeedback } from '../utility/apiRequestHelpers';
+import { convertToApiRequest, extractFromApiRequest, extractFromElementsInput, showCopyFeedback } from '../utility/apiRequestHelpers';
 
 interface UseImportExportOptions {
   jsonInput: string;
@@ -19,6 +19,8 @@ export function useImportExport({
 }: UseImportExportOptions) {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importJsonInput, setImportJsonInput] = useState('');
+  const [showElementsImportModal, setShowElementsImportModal] = useState(false);
+  const [elementsImportInput, setElementsImportInput] = useState('');
   
   // 複製 API 請求格式
   const copyApiRequest = async () => {
@@ -59,6 +61,27 @@ export function useImportExport({
     }
   };
   
+  // 打開 Elements 匯入彈窗
+  const openElementsImportModal = () => {
+    setShowElementsImportModal(true);
+    setElementsImportInput('');
+  };
+  
+  // 處理匯入 Elements
+  const handleImportElements = () => {
+    try {
+      const editorJsonString = extractFromElementsInput(elementsImportInput);
+      setJsonInput(editorJsonString);
+      setShowElementsImportModal(false);
+      setElementsImportInput('');
+      setError(null);
+      console.log('Elements 已成功匯入到編輯器');
+    } catch (err) {
+      console.error('匯入 Elements 失敗:', err);
+      setError(err instanceof Error ? err.message : '匯入失敗，請重試');
+    }
+  };
+  
   return {
     showImportModal,
     setShowImportModal,
@@ -67,6 +90,13 @@ export function useImportExport({
     copyApiRequest,
     openImportModal,
     handleImportApiRequest,
+    // Elements 匯入相關
+    showElementsImportModal,
+    setShowElementsImportModal,
+    elementsImportInput,
+    setElementsImportInput,
+    openElementsImportModal,
+    handleImportElements,
   };
 }
 

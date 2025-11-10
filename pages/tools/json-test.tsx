@@ -12,6 +12,7 @@ import { convertToApiRequest, extractFromApiRequest, showCopyFeedback } from '..
 import { CREATOMATE_ASSETS, getAssetsByType, getAllTypes, TYPE_ICONS, TYPE_COLORS, CreatomateAsset } from '../../utility/creatomateAssets';
 import { TimelinePanelComponent } from '../../components/json-test/TimelinePanelComponent';
 import { ImportModalComponent } from '../../components/json-test/ImportModalComponent';
+import { ElementsImportModalComponent } from '../../components/json-test/ElementsImportModalComponent';
 import { AssetsModalComponent } from '../../components/json-test/AssetsModalComponent';
 import { ExampleDropdown } from '../../components/json-test/ExampleDropdown';
 import { JSON_EXAMPLES, DEFAULT_JSON } from '../../data/json-examples';
@@ -34,6 +35,7 @@ import {
   ExampleButton,
   CopyApiButton,
   ImportApiButton,
+  ImportElementsButton,
   TestImageButton,
   TestBase64Button,
   AssetsButton,
@@ -147,6 +149,13 @@ const JSONTest: React.FC = () => {
     copyApiRequest,
     openImportModal,
     handleImportApiRequest,
+    // Elements 匯入相關
+    showElementsImportModal,
+    setShowElementsImportModal,
+    elementsImportInput,
+    setElementsImportInput,
+    openElementsImportModal,
+    handleImportElements,
   } = useImportExport({ jsonInput, setJsonInput, setError });
 
   // 🔄 處理時間變化（獨立函數，可訪問最新 state）
@@ -569,6 +578,15 @@ const JSONTest: React.FC = () => {
               
             </ButtonGroup>
             
+            {/* 第二排按鈕 */}
+            <ButtonGroup>
+              <ImportElementsButton
+                onClick={openElementsImportModal}
+              >
+                匯入 Elements
+              </ImportElementsButton>
+            </ButtonGroup>
+            
             <EditorContainer>
               {/* 層1: 自動播放高亮（最底層，淺灰）- 多個元素 */}
               {autoHighlightRanges.length > 0 && (
@@ -668,6 +686,15 @@ const JSONTest: React.FC = () => {
           onClose={() => setShowImportModal(false)}
           onImport={handleImportApiRequest}
           onInputChange={setImportJsonInput}
+        />
+
+        {/* 匯入 Elements 彈窗 */}
+        <ElementsImportModalComponent
+          show={showElementsImportModal}
+          elementsInput={elementsImportInput}
+          onClose={() => setShowElementsImportModal(false)}
+          onImport={handleImportElements}
+          onInputChange={setElementsImportInput}
         />
       </Container>
     </div>

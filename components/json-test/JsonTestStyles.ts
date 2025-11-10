@@ -141,6 +141,25 @@ export const ImportApiButton = styled.button`
   }
 `;
 
+export const ImportElementsButton = styled.button`
+  padding: 8px 16px;
+  background: #00bcd4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: #00acc1;
+  }
+  
+  &:active {
+    background: #0097a7;
+  }
+`;
+
 export const TestImageButton = styled.button`
   padding: 8px 16px;
   background: #ff9800;
